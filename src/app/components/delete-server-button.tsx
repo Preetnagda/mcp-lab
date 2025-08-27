@@ -60,7 +60,7 @@ export function DeleteServerButton({ serverId, serverName }: DeleteServerButtonP
         <AlertDialogHeader>
           <AlertDialogTitle>Delete MCP Server</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete "{serverName}"? This action cannot be undone.
+            Are you sure you want to delete &ldquo;{serverName}&rdquo;? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

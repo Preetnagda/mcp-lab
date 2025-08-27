@@ -3,7 +3,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 export interface McpTool {
   name: string;
   description?: string;
-  inputSchema: any;
+  inputSchema: unknown;
 }
 
 export interface McpResource {
@@ -16,21 +16,21 @@ export interface McpResource {
 export interface McpConnectionResult {
   tools: McpTool[];
   resources: McpResource[];
-  capabilities: any;
+  capabilities: Record<string, unknown>;
 }
 
 export interface McpToolCallResult {
   content: Array<{
     type: string;
     text?: string;
-    data?: any;
+    data?: unknown;
   }>;
 }
 
 // Base interface for all MCP transport implementations
 export interface IMcpTransport {
   connect(url: string, headers?: Record<string, string>): Promise<McpConnectionResult>;
-  callTool(url: string, toolName: string, toolArgs: any, headers?: Record<string, string>): Promise<McpToolCallResult>;
+  callTool(url: string, toolName: string, toolArgs: {[x:string]: unknown}, headers?: Record<string, string>): Promise<McpToolCallResult>;
   supportsProtocol(url: string): boolean;
 }
 
@@ -51,10 +51,10 @@ export abstract class BaseMcpTransport implements IMcpTransport {
   protected async safeListTools(client: Client): Promise<McpTool[]> {
     try {
       const result = await client.listTools();
-      return result.tools.map((tool: any) => ({
-        name: tool.name,
-        description: tool.description,
-        inputSchema: tool.inputSchema,
+      return result.tools.map((tool: Record<string, unknown>) => ({
+        name: tool.name as string,
+        description: tool.description as string | undefined,
+        inputSchema: tool.inputSchema as unknown,
       }));
     } catch (error) {
       console.error('Error listing tools:', error);
@@ -65,11 +65,11 @@ export abstract class BaseMcpTransport implements IMcpTransport {
   protected async safeListResources(client: Client): Promise<McpResource[]> {
     try {
       const result = await client.listResources();
-      return result.resources.map((resource: any) => ({
-        uri: resource.uri,
-        name: resource.name,
-        description: resource.description,
-        mimeType: resource.mimeType,
+      return result.resources.map((resource: Record<string, unknown>) => ({
+        uri: resource.uri as string,
+        name: resource.name as string | undefined,
+        description: resource.description as string | undefined,
+        mimeType: resource.mimeType as string | undefined,
       }));
     } catch (error) {
       console.error('Error listing resources:', error);
@@ -110,6 +110,6 @@ export abstract class BaseMcpTransport implements IMcpTransport {
   }
 
   abstract connect(url: string, headers?: Record<string, string>): Promise<McpConnectionResult>;
-  abstract callTool(url: string, toolName: string, toolArgs: any, headers?: Record<string, string>): Promise<McpToolCallResult>;
+  abstract callTool(url: string, toolName: string, toolArgs: {[x:string]: unknown}, headers?: Record<string, string>): Promise<McpToolCallResult>;
   abstract supportsProtocol(url: string): boolean;
 } 

@@ -13,4 +13,3 @@ export { BaseMcpTransport } from '@/lib/transports/base-transport';
 // Export transport implementations
 export { StdioMcpTransport } from '@/lib/transports/stdio-transport';
 export { HttpMcpTransport } from '@/lib/transports/http-transport';
-export { SseMcpTransport } from '@/lib/transports/sse-transport'; 

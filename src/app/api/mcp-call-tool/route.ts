@@ -13,22 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use the new transport-specific method if transportType is provided,
-    // otherwise fall back to legacy URL-based detection
-    const result = transportType
-      ? await McpConnectionManager.callTool(
+    const result = await McpConnectionManager.callTool(
           url, 
           transportType as TransportType,
           toolName, 
           toolArgs || {}, 
           headers || {}
         )
-      : await McpConnectionManager.callToolLegacy(
-          url, 
-          toolName, 
-          toolArgs || {}, 
-          headers || {}
-        );
     
     return NextResponse.json(result);
 

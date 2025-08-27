@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ interface McpServer {
 interface McpTool {
   name: string;
   description?: string;
-  inputSchema: any;
+  inputSchema: unknown;
 }
 
 interface McpResource {
@@ -36,8 +36,8 @@ interface McpResource {
 
 interface ToolCall {
   toolName: string;
-  arguments: any;
-  result?: any;
+  arguments: unknown;
+  result?: unknown;
   error?: string;
   timestamp: Date;
 }
@@ -47,7 +47,7 @@ export default function McpPage() {
   const router = useRouter();
   const [server, setServer] = useState<McpServer | null>(null);
   const [tools, setTools] = useState<McpTool[]>([]);
-  const [resources, setResources] = useState<McpResource[]>([]);
+  const [_resources, setResources] = useState<McpResource[]>([]);
   const [selectedTool, setSelectedTool] = useState<McpTool | null>(null);
   const [toolArguments, setToolArguments] = useState<string>('{}');
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
@@ -57,22 +57,11 @@ export default function McpPage() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [headerOverrides, setHeaderOverrides] = useState<Record<string, string>>({});
   const [showHeaderOverrides, setShowHeaderOverrides] = useState(false);
-  const [inputMode, setInputMode] = useState<'raw' | 'form'>('form');
+
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [showSchema, setShowSchema] = useState(false);
 
-  useEffect(() => {
-    loadServer();
-  }, [params.id]);
-
-  useEffect(() => {
-    // Initialize header overrides when server loads
-    if (server && server.headers) {
-      setHeaderOverrides(server.headers);
-    }
-  }, [server]);
-
-  const loadServer = async () => {
+  const loadServer = useCallback(async () => {
     try {
       const response = await fetch(`/api/mcp-servers/${params.id}`);
       if (response.ok) {
@@ -87,7 +76,18 @@ export default function McpPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params.id, router]);
+
+  useEffect(() => {
+    loadServer();
+  }, [loadServer]);
+
+  useEffect(() => {
+    // Initialize header overrides when server loads
+    if (server && server.headers) {
+      setHeaderOverrides(server.headers);
+    }
+  }, [server]);
 
   const getEffectiveHeaders = () => {
     return { ...headerOverrides };
@@ -165,7 +165,7 @@ export default function McpPage() {
     } catch (error) {
       const newCall: ToolCall = {
         toolName: selectedTool.name,
-        arguments: toolArguments,
+        arguments: JSON.parse(toolArguments),
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date(),
       };

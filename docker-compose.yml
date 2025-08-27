@@ -14,5 +14,15 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  mcp-tester:
+    image: mcp-tester:latest
+    container_name: mcp-tester
+    ports:
+      - "8000:3000"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      env_file: .env
 volumes:
   postgres_data: 

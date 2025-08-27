@@ -1,12 +1,3 @@
-// Export types for backward compatibility
-export type {
-  McpTool,
-  McpResource,
-  McpConnectionResult,
-  McpToolCallResult,
-  IMcpTransport
-} from '@/lib/transports/index';
-
 // Import transport implementations
 import {
   IMcpTransport,
@@ -14,17 +5,15 @@ import {
   McpToolCallResult,
   StdioMcpTransport,
   HttpMcpTransport,
-  SseMcpTransport
 } from '@/lib/transports/index';
 
-export type TransportType = 'stdio' | 'http' | 'sse';
+export type TransportType = 'stdio' | 'http';
 
 // Connection manager that delegates to appropriate transport implementations
 export class McpConnectionManager {
   private static transports: Map<TransportType, IMcpTransport> = new Map([
     ['stdio', new StdioMcpTransport()],
     ['http', new HttpMcpTransport()],
-    ['sse', new SseMcpTransport()],
   ]);
 
   private static getTransport(transportType: TransportType): IMcpTransport {
@@ -53,7 +42,7 @@ export class McpConnectionManager {
     url: string, 
     transportType: TransportType,
     toolName: string, 
-    toolArgs: any = {}, 
+    toolArgs: {[x:string]: unknown} = {}, 
     headers: Record<string, string> = {}
   ): Promise<McpToolCallResult> {
     try {
@@ -73,36 +62,5 @@ export class McpConnectionManager {
   // Method to get available transports
   static getAvailableTransports(): Map<TransportType, IMcpTransport> {
     return new Map(this.transports);
-  }
-
-  // Legacy method for backward compatibility - tries to detect transport from URL
-  static async connectLegacy(url: string, headers: Record<string, string> = {}): Promise<McpConnectionResult> {
-    let transportType: TransportType = 'http';
-    
-    if (url.startsWith('stdio://')) {
-      transportType = 'stdio';
-    } else if (url.startsWith('https://') || url.startsWith('http://')) {
-      transportType = 'http';
-    }
-    
-    return this.connect(url, transportType, headers);
-  }
-
-  // Legacy method for backward compatibility
-  static async callToolLegacy(
-    url: string, 
-    toolName: string, 
-    toolArgs: any = {}, 
-    headers: Record<string, string> = {}
-  ): Promise<McpToolCallResult> {
-    let transportType: TransportType = 'http';
-    
-    if (url.startsWith('stdio://')) {
-      transportType = 'stdio';
-    } else if (url.startsWith('https://') || url.startsWith('http://')) {
-      transportType = 'http';
-    }
-    
-    return this.callTool(url, transportType, toolName, toolArgs, headers);
   }
 } 

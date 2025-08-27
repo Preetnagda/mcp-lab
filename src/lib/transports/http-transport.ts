@@ -40,7 +40,7 @@ export class HttpMcpTransport extends BaseMcpTransport {
     }
   }
 
-  async callTool(url: string, toolName: string, toolArgs: any, headers: Record<string, string> = {}): Promise<McpToolCallResult> {
+  async callTool(url: string, toolName: string, toolArgs: {[x:string]: unknown}, headers: Record<string, string> = {}): Promise<McpToolCallResult> {
     try {
       const transport = new StreamableHTTPClientTransport(new URL(url), {
         requestInit: {

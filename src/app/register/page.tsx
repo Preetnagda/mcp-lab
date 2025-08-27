@@ -134,7 +134,6 @@ export default function RegisterPage() {
               <p className="text-sm text-muted-foreground">
                 {formData.transportType === 'stdio' && 'For local MCP servers that run as processes (e.g., stdio://node server.js)'}
                 {formData.transportType === 'http' && 'For remote MCP servers using modern Streamable HTTP transport'}
-                {formData.transportType === 'sse' && 'For remote MCP servers using legacy Server-Sent Events transport'}
               </p>
             </div>
 

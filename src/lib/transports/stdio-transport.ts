@@ -7,7 +7,7 @@ export class StdioMcpTransport extends BaseMcpTransport {
     return url.startsWith('stdio://');
   }
 
-  async connect(url: string, headers?: Record<string, string>): Promise<McpConnectionResult> {
+  async connect(url: string, _headers?: Record<string, string>): Promise<McpConnectionResult> {
     try {
       const command = url.replace('stdio://', '');
       const parts = command.split(' ');
@@ -44,7 +44,7 @@ export class StdioMcpTransport extends BaseMcpTransport {
     }
   }
 
-  async callTool(url: string, toolName: string, toolArgs: any, headers?: Record<string, string>): Promise<McpToolCallResult> {
+async callTool(url: string, toolName: string, toolArgs: {[x:string]: unknown}, _headers?: Record<string, string>): Promise<McpToolCallResult> {
     try {
       const command = url.replace('stdio://', '');
       const parts = command.split(' ');

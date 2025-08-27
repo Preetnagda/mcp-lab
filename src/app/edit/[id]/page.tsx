@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
@@ -40,11 +40,7 @@ export default function EditPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadServer();
-  }, [params.id]);
-
-  const loadServer = async () => {
+  const loadServer = useCallback(async () => {
     try {
       const response = await fetch(`/api/mcp-servers/${params.id}`);
       if (response.ok) {
@@ -67,12 +63,16 @@ export default function EditPage() {
       } else {
         setError('Server not found');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to load server data');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    loadServer();
+  }, [loadServer]);
 
   const addHeader = () => {
     setHeaders([...headers, { key: '', value: '' }]);
@@ -114,8 +114,8 @@ export default function EditPage() {
       if (response.ok) {
         router.push('/');
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.message}`);
+        const errorData = await response.json();
+        alert(`Error: ${errorData.message}`);
       }
     } catch (error) {
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -205,7 +205,6 @@ export default function EditPage() {
               <p className="text-sm text-muted-foreground">
                 {formData.transportType === 'stdio' && 'For local MCP servers that run as processes (e.g., stdio://node server.js)'}
                 {formData.transportType === 'http' && 'For remote MCP servers using modern Streamable HTTP transport'}
-                {formData.transportType === 'sse' && 'For remote MCP servers using legacy Server-Sent Events transport'}
               </p>
             </div>
 

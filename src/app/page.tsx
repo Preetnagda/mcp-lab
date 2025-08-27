@@ -7,6 +7,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { DeleteServerButton } from "@/app/components/delete-server-button";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'MCP Server Tester',
   description: 'Test MCP servers',
@@ -53,16 +55,11 @@ export default async function HomePage() {
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-xl">{server.name}</CardTitle>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">#{server.id}</Badge>
                       <DeleteServerButton serverId={server.id} serverName={server.name} />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {server.description && (
-                    <p className="text-muted-foreground mb-4">{server.description}</p>
-                  )}
-                  
                   <div className="space-y-2">
                     <div>
                       <span className="text-sm font-medium text-muted-foreground">URL:</span>
