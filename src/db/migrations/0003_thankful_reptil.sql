@@ -1,0 +1,2 @@
+ALTER TABLE "mcp_servers" ADD COLUMN "user_id" serial NOT NULL;--> statement-breakpoint
+ALTER TABLE "mcp_servers" ADD CONSTRAINT "mcp_servers_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

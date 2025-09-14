@@ -1,9 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { mcpServers } from '@/db/schema';
+import { auth } from '@/auth';
+import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { name, description, url, transportType, headers } = body;
 
@@ -26,6 +36,7 @@ export async function POST(request: NextRequest) {
     const newServer = await db
       .insert(mcpServers)
       .values({
+        userId: Number(session.user.id),
         name,
         description: description || null,
         url,
@@ -46,7 +57,19 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const servers = await db.select().from(mcpServers);
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const servers = await db
+      .select()
+      .from(mcpServers)
+      .where(eq(mcpServers.userId, Number(session.user.id)));
+    
     return NextResponse.json(servers);
   } catch (error) {
     console.error('Error fetching MCP servers:', error);
