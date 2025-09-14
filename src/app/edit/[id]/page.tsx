@@ -112,7 +112,7 @@ export default function EditPage() {
       });
 
       if (response.ok) {
-        router.push('/');
+        router.push('/dashboard');
       } else {
         const errorData = await response.json();
         alert(`Error: ${errorData.message}`);
@@ -138,7 +138,7 @@ export default function EditPage() {
         <div className="text-center">
           <div className="text-destructive mb-4">{error}</div>
           <Button variant="ghost" asChild>
-            <Link href="/">
+            <Link href="/dashboard">
               ← Back to Registry
             </Link>
           </Button>
@@ -269,7 +269,7 @@ export default function EditPage() {
               </Button>
               
               <Button variant="outline" asChild>
-                <Link href="/">
+                <Link href="/dashboard">
                   Cancel
                 </Link>
               </Button>

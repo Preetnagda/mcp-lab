@@ -64,7 +64,7 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
-        router.push('/');
+        router.push('/dashboard');
       } else {
         const error = await response.json();
         alert(`Error: ${error.message}`);
@@ -80,7 +80,7 @@ export default function RegisterPage() {
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="flex items-center mb-8">
         <Button variant="ghost" asChild className="mr-4">
-          <Link href="/">
+          <Link href="/dashboard">
             ← Back to Registry
           </Link>
         </Button>
@@ -198,7 +198,7 @@ export default function RegisterPage() {
               </Button>
               
               <Button variant="outline" asChild>
-                <Link href="/">
+                <Link href="/dashboard">
                   Cancel
                 </Link>
               </Button>

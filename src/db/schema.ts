@@ -4,6 +4,7 @@ import { pgTable, serial, text, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-
 export const transportTypeEnum = pgEnum('transport_type', ['stdio', 'http', 'sse']);
 
 export const mcpServers = pgTable('mcp_servers', {
+	userId: serial('user_id').references(() => users.id).notNull(),
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
 	description: text('description'),

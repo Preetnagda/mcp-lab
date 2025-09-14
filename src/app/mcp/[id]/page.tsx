@@ -68,7 +68,7 @@ export default function McpPage() {
         const serverData = await response.json();
         setServer(serverData);
       } else {
-        router.push('/');
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error('Error loading server:', error);
@@ -204,7 +204,7 @@ export default function McpPage() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center">
           <Button variant="ghost" asChild className="mr-4">
-            <Link href="/">
+            <Link href="/dashboard">
               ← Back to Registry
             </Link>
           </Button>

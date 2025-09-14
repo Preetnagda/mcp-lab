@@ -1,10 +1,12 @@
 import { db } from '@/db';
-import { mcpServers } from '@/db/schema';
+import { McpServer, mcpServers } from '@/db/schema';
 import Link from 'next/link';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { DeleteServerButton } from "@/app/components/delete-server-button";
+import { DeleteServerButton } from "@/components/delete-server-button";
+import { auth, signOut } from "@/auth";
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,17 +16,40 @@ export const metadata = {
 }
 
 export default async function HomePage() {
-	const servers = await db.select().from(mcpServers).orderBy(desc(mcpServers.createdAt));
+	const session = await auth();
+	if (!session?.user) {
+		redirect('/auth/login');
+	}
+	let servers: McpServer[] = [];
+
+	if (session && session.user) {
+
+		servers = await db
+			.select()
+			.from(mcpServers)
+			.where(eq(mcpServers.userId, Number(session.user.id)))
+			.orderBy(desc(mcpServers.createdAt));
+	}
+
+	async function logout() {
+		"use server";
+		await signOut();
+	}
 
 	return (
 		<div className="container mx-auto px-4 py-8">
 			<div className="flex justify-between items-center mb-8">
 				<h1 className="text-4xl font-bold tracking-tight">MCP Server Tester</h1>
-				<Button asChild>
-					<Link href="/register">
-						Register New MCP Server
-					</Link>
-				</Button>
+				<div className="flex items-center gap-3">
+					<Button asChild>
+						<Link href="/register">
+							Register New MCP Server
+						</Link>
+					</Button>
+					<form action={logout}>
+						<Button type="submit" variant="secondary">Logout</Button>
+					</form>
+				</div>
 			</div>
 
 			{servers.length === 0 ? (

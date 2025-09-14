@@ -15,6 +15,20 @@
       "when": 1748820991842,
       "tag": "0001_salty_quasar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1757584413768,
+      "tag": "0002_clean_ben_urich",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1757773245046,
+      "tag": "0003_thankful_reptil",
+      "breakpoints": true
     }
   ]
 }

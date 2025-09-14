@@ -1,16 +1,20 @@
-"use client"
-
 import Link from "next/link";
+import { signIn } from "@/auth";
 
-interface CredentialsLoginFormProps {
-	submitUrl: string
-}
-
-export function CredentialsLoginForm({ submitUrl }: CredentialsLoginFormProps) {
+export function CredentialsLoginForm() {
 
 	return (
 		<div className="max-w-xl min-w-md">
-			<form action={submitUrl} method="POST" className="bg-white dark:bg-card shadow-md rounded-lg px-8 py-8 space-y-6">
+			<form
+				action={async (formData) => {
+					"use server"
+					const email = formData.get('email') as string;
+					const password = formData.get('password') as string;
+					console.log({ email, password })
+					await signIn("credentials", { redirectTo: "/dashboard", email, password }, { email, password })
+				}}
+				className="bg-white dark:bg-card shadow-md rounded-lg px-8 py-8 space-y-6"
+			>
 				<div>
 					<label htmlFor="email" className="block text-sm font-medium text-muted-foreground mb-1">Email</label>
 					<input
@@ -40,7 +44,7 @@ export function CredentialsLoginForm({ submitUrl }: CredentialsLoginFormProps) {
 					>
 						Login
 					</button>
-					<span className="text-muted-foreground text-sm w-full mt-4">Don't have an account? <Link className="text-foreground" href="/auth/register">Register</Link></span>
+					<span className="text-muted-foreground text-sm w-full mt-4">Don&apos;t have an account? <Link className="text-foreground" href="/auth/register">Register</Link></span>
 				</div>
 			</form>
 		</div>
