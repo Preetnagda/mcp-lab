@@ -2,7 +2,6 @@ import Link from "next/link";
 import { signIn } from "@/auth";
 
 export function CredentialsLoginForm() {
-
 	return (
 		<div className="max-w-xl min-w-md">
 			<form
@@ -10,8 +9,11 @@ export function CredentialsLoginForm() {
 					"use server"
 					const email = formData.get('email') as string;
 					const password = formData.get('password') as string;
-					console.log({ email, password })
-					await signIn("credentials", { redirectTo: "/dashboard", email, password }, { email, password })
+					try {
+						await signIn("credentials", { redirectTo: "/dashboard", email, password })
+					} catch (err) {
+						console.error("Login error:", err);
+					}
 				}}
 				className="bg-white dark:bg-card shadow-md rounded-lg px-8 py-8 space-y-6"
 			>
@@ -44,7 +46,9 @@ export function CredentialsLoginForm() {
 					>
 						Login
 					</button>
-					<span className="text-muted-foreground text-sm w-full mt-4">Don&apos;t have an account? <Link className="text-foreground" href="/auth/register">Register</Link></span>
+				</div>
+				<div className="mt-2 w-full flex justify-center">
+					<span className="text-muted-foreground text-sm">Don&apos;t have an account? <Link className="text-foreground" href="/auth/register">Register</Link></span>
 				</div>
 			</form>
 		</div>
