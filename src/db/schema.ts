@@ -1,6 +1,7 @@
 import { pgTable, serial, text, timestamp, jsonb, pgEnum } from 'drizzle-orm/pg-core';
 
 // Define transport type enum
+export const providers = pgEnum('provider', ['openai', 'anthropic']);
 export const transportTypeEnum = pgEnum('transport_type', ['stdio', 'http', 'sse']);
 
 export const mcpServers = pgTable('mcp_servers', {
@@ -21,6 +22,14 @@ export const users = pgTable('users', {
 	lastName: text('last_name').notNull(),
 	email: text('email').unique().notNull(),
 	password: text('password').notNull(),
+});
+
+const apiKeys = pgTable('api_keys', {
+	id: serial('id').primaryKey(),
+	userId: serial('user_id').references(() => users.id).notNull(),
+	key: text('key').notNull(),
+	provider: providers('provider').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
 export type McpServer = typeof mcpServers.$inferSelect;

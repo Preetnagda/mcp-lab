@@ -1,6 +1,20 @@
+import { auth } from '@/auth';
 import Chat from '@/components/chat/chat';
+import { getMCPServers } from '@/services/mcp-service';
+import { redirect } from 'next/navigation';
 
-export default function ChatPage() {
+export default async function ChatPage() {
+	const session = await auth();
 
-	return <Chat mcpServers={[]} model="gpt-4o-mini" />
+	if (!session) {
+		redirect('/auth/login');
+	}
+
+	const mcpServers = await getMCPServers(session);
+
+	return <>
+		<Chat mcpServers={mcpServers} />
+		<div>
+		</div>
+	</>
 } 

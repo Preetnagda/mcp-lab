@@ -120,3 +120,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+@layer components {
+  .rjsf-tailwind .form-group {
+    @apply flex flex-col gap-2;
+  }
+
+  .rjsf-tailwind .control-label {
+    @apply mb-1 inline-flex items-center gap-1 text-sm font-medium text-foreground;
+  }
+
+  .rjsf-tailwind .control-label .required {
+    @apply text-destructive;
+  }
+
+  .rjsf-tailwind .form-control,
+  .rjsf-tailwind select,
+  .rjsf-tailwind textarea {
+    @apply border border-input bg-card text-foreground placeholder:text-muted-foreground rounded-md px-3 py-2 shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px];
+  }
+
+  .rjsf-tailwind .help-block,
+  .rjsf-tailwind .field-description {
+    @apply text-sm text-muted-foreground;
+  }
+}

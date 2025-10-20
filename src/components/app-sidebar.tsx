@@ -25,19 +25,9 @@ const items = [
 		icon: Server,
 	},
 	{
-		title: "Chat",
-		url: "/dashboard/chat",
-		icon: MessageSquare,
-	},
-	{
 		title: "Credentials",
-		url: "#",
+		url: "/dashboard/credentials",
 		icon: Lock,
-	},
-	{
-		title: "Settings",
-		url: "#",
-		icon: Settings,
 	},
 ]
 

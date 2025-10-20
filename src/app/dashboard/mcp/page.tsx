@@ -10,7 +10,6 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-
 export default async function HomePage() {
 	const session = await auth();
 	if (!session?.user) {
@@ -31,7 +30,7 @@ export default async function HomePage() {
 		<div className="container mx-auto px-4 py-8">
 			<div className="flex justify-end items-center mb-8">
 				<Button asChild>
-					<Link href="/register">
+					<Link href="register">
 						Register New MCP Server
 					</Link>
 				</Button>
@@ -48,7 +47,7 @@ export default async function HomePage() {
 						<h3 className="text-lg font-semibold mb-2">No MCP servers registered</h3>
 						<p className="text-muted-foreground mb-4">Get started by registering your first MCP server</p>
 						<Button asChild>
-							<Link href="/register">
+							<Link href="/dashboard/register">
 								Register MCP Server
 							</Link>
 						</Button>
