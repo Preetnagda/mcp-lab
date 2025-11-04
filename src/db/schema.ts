@@ -24,7 +24,7 @@ export const users = pgTable('users', {
 	password: text('password').notNull(),
 });
 
-const apiKeys = pgTable('api_keys', {
+export const apiKeys = pgTable('api_keys', {
 	id: serial('id').primaryKey(),
 	userId: serial('user_id').references(() => users.id).notNull(),
 	key: text('key').notNull(),
@@ -33,4 +33,5 @@ const apiKeys = pgTable('api_keys', {
 });
 
 export type McpServer = typeof mcpServers.$inferSelect;
-export type NewMcpServer = typeof mcpServers.$inferInsert; 
+export type NewMcpServer = typeof mcpServers.$inferInsert;
+export type ApiKey = typeof apiKeys.$inferSelect;

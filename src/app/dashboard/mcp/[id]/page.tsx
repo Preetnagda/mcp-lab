@@ -10,6 +10,7 @@ import ManualInteraction from '@/components/mcp/manual-interaction';
 import Chat from '@/components/chat/chat';
 import { McpTool, McpResource } from '@/lib/mcp/types';
 import { McpServer } from '@/db/schema';
+import { useSession } from 'next-auth/react';
 
 const isStringRecord = (value: unknown): value is Record<string, string> => {
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -22,6 +23,7 @@ const isStringRecord = (value: unknown): value is Record<string, string> => {
 export default function McpPage() {
 	const params = useParams();
 	const router = useRouter();
+	const { data: session } = useSession();
 	const [interactionType, setInteractionType] = useState<'manual' | 'chat'>('manual');
 	const [server, setServer] = useState<McpServer | null>(null);
 	const [tools, setTools] = useState<McpTool[]>([]);
@@ -63,6 +65,16 @@ export default function McpPage() {
 		}
 	}, [server]);
 
+	if (session === undefined) {
+		return null; // TODO: handle this before this component is rendered
+	}
+
+	const userId = session?.user?.id;
+
+	if (!userId) {
+		router.push('/auth/login');
+		return null;
+	}
 	const getEffectiveHeaders = () => {
 		return { ...headerOverrides };
 	};

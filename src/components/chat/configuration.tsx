@@ -3,7 +3,7 @@
 import { useCallback, useMemo } from 'react';
 import { CheckCircle2, Circle } from 'lucide-react';
 
-import { McpServer } from '@/db/schema';
+import Link from 'next/link'
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,37 +22,23 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/components/ui/select';
-import { McpTool } from '@/lib/transports';
+import { McpTool } from '@/lib/mcp/types';
 
-type ModelValue = 'gpt-4o-mini' | 'o4-mini' | (string & {});
 interface ModelOption {
-	value: ModelValue;
+	value: string;
 	label?: string;
 	provider: string;
 }
 
-const DEFAULT_MODELS: ModelOption[] = [
-	{
-		value: 'gpt-4o-mini',
-		label: 'GPT-4o Mini',
-		provider: 'OpenAI',
-	},
-	{
-		value: 'o4-mini',
-		label: 'O4 Mini',
-		provider: 'OpenAI',
-	},
-];
-
 interface ChatConfigurationProps {
 	className?: string;
 	tokensUsed?: number;
-	selectedModel: ModelOption;
+	selectedModel: ModelOption | undefined;
 	allTools: McpTool[];
 	selectedTools: McpTool[];
 	onSelectedToolsChange: (tools: McpTool[]) => void;
 	onSelectedModelChange: (value: ModelOption) => void;
-	models?: ModelOption[];
+	models: ModelOption[];
 }
 
 export type { ModelOption as ChatConfigurationModelOption };
@@ -67,31 +53,7 @@ export default function ChatConfiguration({
 	models,
 	tokensUsed,
 }: ChatConfigurationProps) {
-	const modelOptions = models && models.length > 0 ? models : DEFAULT_MODELS;
 
-	const mergedModelOptions = useMemo(() => {
-		if (!selectedModel) {
-			return modelOptions;
-		}
-
-		const exists = modelOptions.some(option => option.value === selectedModel.value);
-
-		if (exists) {
-			return modelOptions;
-		}
-
-		return [
-			...modelOptions,
-			{
-				value: selectedModel,
-				label: selectedModel,
-			},
-		];
-	}, [modelOptions, selectedModel]);
-
-
-	const selectedModelOption = mergedModelOptions.find(option => option.value === selectedModel.value);
-	const selectedModelBadgeLabel = selectedModelOption?.label ?? (selectedModel.label ? selectedModel.label : undefined);
 	const selectedToolNames = useMemo(() => new Set(selectedTools.map(tool => tool.name)), [selectedTools]);
 	const hasTools = allTools.length > 0;
 	const allToolsSelected = hasTools && allTools.every(tool => selectedToolNames.has(tool.name));
@@ -138,9 +100,30 @@ export default function ChatConfiguration({
 					<section className="space-y-3">
 						<div className="flex items-center justify-between gap-2">
 							<span className="text-sm font-medium text-muted-foreground tracking-wide">Model</span>
-							{selectedModelBadgeLabel ? (
-								<Badge variant="secondary">{selectedModelBadgeLabel}</Badge>
-							) : null}
+							{models.length === 0 ? (
+								<span className="text-sm text-muted-foreground"><Link href='/dashboard/credentials'>Add API keys</Link></span>
+							) :
+								<Select
+									value={selectedModel ? selectedModel.value: undefined}
+									onValueChange={value => {
+										const model = models.find(m => m.value === value);
+										if (model) {
+											onSelectedModelChange(model);
+										}
+									}}
+								>
+									<SelectTrigger className="w-[180px]">
+										<SelectValue placeholder="Select model" />
+									</SelectTrigger>
+									<SelectContent>
+										{models.map(model => (
+											<SelectItem key={model.value} value={model.value}>
+												{model.label || model.value}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							}
 						</div>
 					</section>
 
