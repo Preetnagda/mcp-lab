@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     const newServer = await db
       .insert(mcpServers)
       .values({
-        userId: Number(session.user.id),
+        userId: session.user.id,
         name,
         description: description || null,
         url,
@@ -68,7 +68,7 @@ export async function GET() {
     const servers = await db
       .select()
       .from(mcpServers)
-      .where(eq(mcpServers.userId, Number(session.user.id)));
+      .where(eq(mcpServers.userId, session.user.id));
     
     return NextResponse.json(servers);
   } catch (error) {

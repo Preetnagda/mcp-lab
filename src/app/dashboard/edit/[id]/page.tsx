@@ -33,7 +33,7 @@ export default function EditPage() {
     name: '',
     description: '',
     url: '',
-    transportType: 'http' as 'stdio' | 'http' | 'sse',
+    transportType: 'http',
   });
   const [headers, setHeaders] = useState<Header[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -191,15 +191,13 @@ export default function EditPage() {
               <Label htmlFor="transportType">Transport Type *</Label>
               <Select
                 value={formData.transportType}
-                onValueChange={(value: 'stdio' | 'http' | 'sse') => setFormData(prev => ({ ...prev, transportType: value }))}
+                onValueChange={(value: 'http') => setFormData(prev => ({ ...prev, transportType: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select transport type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="http">HTTP/HTTPS (Streamable HTTP)</SelectItem>
-                  <SelectItem value="sse">HTTP/HTTPS (Server-Sent Events)</SelectItem>
-                  <SelectItem value="stdio">Local Process (stdio://)</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">

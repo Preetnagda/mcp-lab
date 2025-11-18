@@ -65,14 +65,19 @@ export default function McpPage() {
 		}
 	}, [server]);
 
+	const userId = session?.user?.id;
+
+	useEffect(() => {
+		if (session && !userId) {
+			router.replace('/auth/login');
+		}
+	}, [session, userId, router]);
+
 	if (session === undefined) {
 		return null; // TODO: handle this before this component is rendered
 	}
 
-	const userId = session?.user?.id;
-
-	if (!userId) {
-		router.push('/auth/login');
+	if (session && !userId) {
 		return null;
 	}
 	const getEffectiveHeaders = () => {

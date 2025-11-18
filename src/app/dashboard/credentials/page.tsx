@@ -34,7 +34,7 @@ async function upsertApiKeyAction(formData: FormData) {
     redirect("/auth/login");
   }
 
-  const userId = Number(session.user.id);
+  const userId = session.user.id;
   const provider = formData.get("provider");
   const key = formData.get("key");
 
@@ -70,7 +70,7 @@ async function removeApiKeyAction(formData: FormData) {
     redirect("/auth/login");
   }
 
-  const userId = Number(session.user.id);
+  const userId = session.user.id;
   const apiKeyId = formData.get("apiKeyId");
 
   if (typeof apiKeyId !== "string" || apiKeyId.length === 0) {
@@ -92,7 +92,7 @@ export default async function CredentialsPage() {
     redirect("/auth/login");
   }
 
-  const userId = Number(session.user.id);
+  const userId = session.user.id;
   const [summary, existingKeys] = await Promise.all([
     summarizeUserApiKeys(userId),
     getUserApiKeys(userId),

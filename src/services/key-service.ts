@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { apiKeys, ApiKey, providers } from "@/db/schema";
 
 export type CreateApiKeyInput = {
-  userId: number;
+  userId: string;
   key: string;
   provider: ApiKey["provider"];
 };
@@ -28,7 +28,7 @@ export const createApiKey = async (input: CreateApiKeyInput): Promise<ApiKey> =>
   return inserted;
 };
 
-export const getUserApiKeys = async (userId: number): Promise<ApiKey[]> => {
+export const getUserApiKeys = async (userId: string): Promise<ApiKey[]> => {
   const keys = await db
     .select()
     .from(apiKeys)
@@ -37,7 +37,7 @@ export const getUserApiKeys = async (userId: number): Promise<ApiKey[]> => {
   return keys;
 };
 
-export const summarizeUserApiKeys = async (userId: number): Promise<ApiKeySummary> => {
+export const summarizeUserApiKeys = async (userId: string): Promise<ApiKeySummary> => {
   const keys = await getUserApiKeys(userId);
 
   const summary = providers.enumValues.reduce<ApiKeySummary>((acc, provider) => {
@@ -52,7 +52,7 @@ export const summarizeUserApiKeys = async (userId: number): Promise<ApiKeySummar
   return summary;
 };
 
-export const deleteApiKey = async (userId: number, apiKeyId: number): Promise<boolean> => {
+export const deleteApiKey = async (userId: string, apiKeyId: number): Promise<boolean> => {
   const deleted = await db
     .delete(apiKeys)
     .where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.userId, userId)))

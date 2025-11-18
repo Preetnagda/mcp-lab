@@ -22,7 +22,7 @@ export async function GET(
 
 		const queryFilters = [
 			eq(mcpServers.id, idNumber),
-			eq(mcpServers.userId, Number(session?.user?.id) || 0)
+			eq(mcpServers.userId, session?.user?.id || '')
 		];
 
 		const server = await
@@ -102,7 +102,7 @@ export async function PUT(
 			})
 			.where(and(
 				eq(mcpServers.id, idNumber),
-				eq(mcpServers.userId, Number(session.user.id))
+				eq(mcpServers.userId, session.user.id)
 			))
 			.returning();
 
@@ -149,7 +149,7 @@ export async function DELETE(
 		const server = await db.query.mcpServers.findFirst({
 			where: and(
 				eq(mcpServers.id, idNumber),
-				eq(mcpServers.userId, Number(session.user.id))
+				eq(mcpServers.userId, session.user.id)
 			),
 		});
 
@@ -161,7 +161,7 @@ export async function DELETE(
 			.delete(mcpServers)
 			.where(and(
 				eq(mcpServers.id, idNumber),
-				eq(mcpServers.userId, Number(session.user.id))
+				eq(mcpServers.userId, session.user.id)
 			));
 
 		return NextResponse.json({ message: 'Server deleted successfully' });

@@ -22,7 +22,7 @@ export default async function HomePage() {
 		servers = await db
 			.select()
 			.from(mcpServers)
-			.where(eq(mcpServers.userId, Number(session.user.id)))
+			.where(eq(mcpServers.userId, session.user.id))
 			.orderBy(desc(mcpServers.createdAt));
 	}
 

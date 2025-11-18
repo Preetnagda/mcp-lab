@@ -1,32 +1,14 @@
+import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import NextAuth from "next-auth"
-import Credentials from "next-auth/providers/credentials"
-import { signInSchema } from "@/lib/zod"
-import { getUserFromEmail } from "./services/user-service"
-import { compareWithHash } from "@/lib/crypt";
+import Nodemailer from "next-auth/providers/nodemailer"
 import type { Provider } from "next-auth/providers"
+import { db } from "@/db";
+import { users, accounts, sessions, verificationTokens } from "@/db/schema";
 
 const providers: Provider[] = [
-	Credentials({
-		credentials: {
-			email: {},
-			password: {}
-		},
-		authorize: async (credentials) => {
-			const { email, password } = await signInSchema.parseAsync(credentials)
-			const user = await getUserFromEmail(email);
-			if (!user) {
-				throw new Error("User not found");
-			}
-			// Compare provided password with stored password hash
-			if (!await compareWithHash(password, user.password)) {
-				throw new Error("Invalid credentials.")
-			}
-			return {
-				id: user.id,
-				email: user.email,
-				name: user.firstName + " " + user.lastName
-			};
-		},
+	Nodemailer({
+		server: process.env.EMAIL_SERVER,
+		from: process.env.EMAIL_FROM
 	})
 ]
 
@@ -42,15 +24,22 @@ export const providerMap = providers
 	.filter((provider) => provider.id !== "credentials")
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+	adapter: DrizzleAdapter(db, {
+		usersTable: users,
+		accountsTable: accounts,
+		sessionsTable: sessions,
+		verificationTokensTable: verificationTokens,
+	}),
 	providers,
 	pages: {
 		signIn: "/auth/login",
 	},
 	callbacks: {
-		session: ({ session, token }) => {
-			//@ts-ignore
-			session.user.id = Number(token.sub)
-			return session
+		session: ({ session, user }) => {
+			if (user) {
+				session.user.id = user.id;
+			}
+			return session;
 		}
 	}
 })

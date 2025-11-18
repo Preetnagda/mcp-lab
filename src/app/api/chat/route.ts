@@ -9,7 +9,7 @@ import { getModel } from '@/lib/llm';
 import { ApiKey } from '@/db/schema';
 import { getUserApiKeys } from '@/services/key-service';
 
-export const maxDuration = 2 * 60 // 2 minutes
+export const maxDuration = 120 // 2 minutes
 
 interface ChatRequest {
 	model: ChatConfigurationModelOption;
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 			break;
 		}
 	}
-	if(!apiKeyToUse) {
+	if (!apiKeyToUse) {
 		return new Response('API key for selected model provider not found', { status: 400 });
 	}
 

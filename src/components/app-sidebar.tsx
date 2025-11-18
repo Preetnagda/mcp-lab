@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { NavUser } from "./nav-user"
 import { signOut } from "@/auth"
+import Link from "next/link"
+import { auth } from "@/auth"
 
 // Menu items.
 const items = [
@@ -37,6 +39,8 @@ export function AppSidebar() {
 		await signOut()
 	}
 
+	const session = auth();
+
 	return (
 		<Sidebar>
 			<SidebarHeader>
@@ -44,11 +48,11 @@ export function AppSidebar() {
 					<SidebarMenu>
 						<SidebarMenuItem>
 							<SidebarMenuButton size="lg" asChild>
-								<a href="/dashboard/mcp">
+								<Link href="/dashboard/mcp">
 									<div className="flex flex-col gap-0.5 leading-none">
 										<span className="font-medium text-xl">MCP Lab</span>
 									</div>
-								</a>
+								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
 					</SidebarMenu>
@@ -61,10 +65,11 @@ export function AppSidebar() {
 							{items.map((item) => (
 								<SidebarMenuItem key={item.title}>
 									<SidebarMenuButton asChild>
-										<a href={item.url}>
+										<Link
+											href={item.url}>
 											<item.icon />
 											<span>{item.title}</span>
-										</a>
+										</Link>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
 							))}
@@ -82,7 +87,9 @@ export function AppSidebar() {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
-				<NavUser user={{ "email": "preetnagda34@gmail.com", "name": "Preet Nagda" }} />
+				{session.data && session.data.user &&
+					<NavUser user={session.data.user} />
+				}
 			</SidebarFooter>
 		</Sidebar>
 	)

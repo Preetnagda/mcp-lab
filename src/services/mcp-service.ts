@@ -12,7 +12,7 @@ export const getMCPServers = async (session: Session, params?: GetMCPServersPara
 		return [];
 	}
 
-	const andConditions = [eq(mcpServers.userId, Number(session.user.id))];
+	const andConditions = [eq(mcpServers.userId, session.user.id)];
 	if (params) {
 		if (params.ids && params.ids.length > 0) {
 			andConditions.push(inArray(mcpServers.id, params.ids));

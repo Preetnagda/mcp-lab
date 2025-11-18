@@ -1,4 +1,4 @@
-import { CredentialsLoginForm } from "@/components/credentials-login-form"
+import { EmailLoginForm } from "@/components/email-login-form"
 import { auth } from "@/auth";
 import Image from "next/image";
 import { redirect } from "next/navigation";
@@ -11,7 +11,7 @@ export default async function LoginPage() {
 	return (
 		<div className="min-h-screen flex flex-col items-center justify-center">
 			<Image src="/logo.png" alt="MCP Lab" width={300} height={300} className="mb-8" />
-			<CredentialsLoginForm />
+			<EmailLoginForm />
 		</div>
 	);
 }
