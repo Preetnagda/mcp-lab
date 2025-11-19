@@ -39,7 +39,9 @@ jobs:
           echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_ENV"
 
       - name: Run database migrations
-        run: DATABASE_URL="$DATABASE_URL" npm run db:migrate
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
 
       - name: Deploy to Production
         run: npx sst deploy --stage production
