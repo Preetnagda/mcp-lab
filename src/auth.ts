@@ -4,11 +4,12 @@ import Nodemailer from "next-auth/providers/nodemailer"
 import type { Provider } from "next-auth/providers"
 import { db } from "@/db";
 import { users, accounts, sessions, verificationTokens } from "@/db/schema";
+import { Resource } from "sst";
 
 const providers: Provider[] = [
 	Nodemailer({
-		server: process.env.EMAIL_SERVER,
-		from: process.env.EMAIL_FROM
+		server: Resource.EMAIL_SERVER.value,
+		from: Resource.EMAIL_FROM.value
 	})
 ]
 

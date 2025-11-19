@@ -1,4 +1,4 @@
-import { Lock, Server, Settings, MessageSquare } from "lucide-react"
+import { Lock, Server } from "lucide-react"
 
 import {
 	Sidebar,
@@ -6,18 +6,13 @@ import {
 	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupContent,
-	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import { NavUser } from "./nav-user"
 import { signOut } from "@/auth"
 import Link from "next/link"
-import { auth } from "@/auth"
 
 // Menu items.
 const items = [
@@ -38,8 +33,6 @@ export function AppSidebar() {
 		"use server"
 		await signOut()
 	}
-
-	const session = auth();
 
 	return (
 		<Sidebar>
@@ -87,9 +80,6 @@ export function AppSidebar() {
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
-				{session.data && session.data.user &&
-					<NavUser user={session.data.user} />
-				}
 			</SidebarFooter>
 		</Sidebar>
 	)
