@@ -181,12 +181,12 @@ export default function ManualInteraction({
 
 	return (
 		<div className={cn('grid h-full min-h-0 gap-8 lg:grid-cols-6', className)}>
-			<div className="col-span-2 min-h-0 space-y-4">
+			<div className="lg:col-span-2 min-h-0 space-y-4">
 				<Card className="flex h-full flex-col overflow-hidden">
 					<CardHeader>
 						<CardTitle>Available Tools</CardTitle>
 					</CardHeader>
-					<CardContent className="flex-1 overflow-y-auto pr-2">
+					<CardContent className="flex-1 overflow-y-auto md:pr-2">
 						<div className="space-y-4">
 							{tools.map((tool) => {
 								return (
@@ -198,7 +198,7 @@ export default function ManualInteraction({
 											}`}
 										onClick={() => handleSelectTool(tool)}
 									>
-										<h3 className="font-medium">{tool.name}</h3>
+										<h3 className="font-medium overflow-hidden overflow-ellipsis">{tool.name}</h3>
 										{tool.description && (
 											<p className="text-sm text-muted-foreground mt-1">{tool.description}</p>
 										)}
@@ -214,7 +214,7 @@ export default function ManualInteraction({
 			</div>
 
 			{selectedTool && (
-				<Card className="col-span-4 flex h-full flex-col overflow-hidden">
+				<Card className="lg:col-span-4 flex h-full flex-col overflow-hidden">
 					<CardHeader>
 						<CardTitle>Tool: {selectedTool.name}</CardTitle>
 					</CardHeader>

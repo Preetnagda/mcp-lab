@@ -9,7 +9,7 @@ export default async function LoginPage() {
 		redirect("/dashboard");
 	}
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center">
+		<div className="min-h-screen w-full overflow-x-hidden flex flex-col items-center justify-center px-4">
 			<Image src="/logo.png" alt="MCP Lab" width={300} height={300} className="mb-8" />
 			<EmailLoginForm />
 		</div>

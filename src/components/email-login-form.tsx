@@ -49,7 +49,7 @@ export function EmailLoginForm() {
 	const errorMessage = getErrorMessage();
 
 	return (
-		<div className="max-w-xl min-w-md space-y-4">
+		<div className="max-w-xl md:min-w-md w-full space-y-4">
 			<form
 				onSubmit={handleSubmit}
 				className="bg-white dark:bg-card shadow-md rounded-lg px-8 py-8 space-y-6"
