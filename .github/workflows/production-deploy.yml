@@ -1,0 +1,45 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ap-southeast-2 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Capture DATABASE_URL secret
+        run: |
+          DATABASE_URL=$(npx sst secret list --stage production | awk '/DATABASE_URL/ {print $NF}')
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "DATABASE_URL not found" >&2
+            exit 1
+          fi
+          echo "::add-mask::${DATABASE_URL}"
+          echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_ENV"
+
+      - name: Run database migrations
+        run: DATABASE_URL="$DATABASE_URL" npx run db:migrate
+
+      - name: Deploy to Production
+        run: npx sst deploy --stage production
