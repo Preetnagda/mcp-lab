@@ -11,6 +11,8 @@ import type { RJSFSchema } from '@rjsf/utils';
 import SchemaForm from '@/components/mcp/schema-form';
 import { McpTool } from '@/lib/mcp/types';
 import { cn } from '@/lib/utils';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 type ManualServer = {
 	url: string;
@@ -265,9 +267,14 @@ export default function ManualInteraction({
 											<p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
 												JSON Preview
 											</p>
-											<pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs">
+											<SyntaxHighlighter
+												language="json"
+												style={oneDark}
+												wrapLongLines={true}
+												customStyle={{ margin: 0, borderRadius: '0.375rem', fontSize: '0.75rem' }}
+											>
 												{toolArguments}
-											</pre>
+											</SyntaxHighlighter>
 										</div>
 									</div>
 								) : (
@@ -311,9 +318,14 @@ export default function ManualInteraction({
 																	</div>
 																	<div className="text-sm">
 																		<div className="font-medium mb-1">Arguments:</div>
-																		<pre className="bg-muted p-2 rounded-md overflow-x-auto">
+																		<SyntaxHighlighter
+																			language="json"
+																			style={oneDark}
+																			wrapLongLines={true}
+																			customStyle={{ margin: 0, borderRadius: '0.375rem', fontSize: '0.875rem' }}
+																		>
 																			{argumentPreview}
-																		</pre>
+																		</SyntaxHighlighter>
 																	</div>
 																	{call.error ? (
 																		<div className="text-sm">
@@ -340,9 +352,14 @@ export default function ManualInteraction({
 																		<div className="text-sm">
 																			<div className="font-medium mb-1">Result:</div>
 																			<div className="relative">
-																				<pre className="bg-muted p-2 rounded-md overflow-x-auto">
+																				<SyntaxHighlighter
+																					language="json"
+																					style={oneDark}
+																					wrapLongLines={true}
+																					customStyle={{ margin: 0, borderRadius: '0.375rem', fontSize: '0.875rem' }}
+																				>
 																					{JSON.stringify(call.result, null, 2)}
-																				</pre>
+																				</SyntaxHighlighter>
 																				<Button
 																					variant="ghost"
 																					size="icon"
