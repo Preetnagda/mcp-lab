@@ -30,7 +30,7 @@ jobs:
 
       - name: Capture DATABASE_URL secret
         run: |
-          DATABASE_URL=$(npx sst secret list --stage production | awk '/DATABASE_URL/ {print $NF}')
+          DATABASE_URL=$(npx sst secret list --stage production | awk '/DATABASE_URL/ {print $NF}' | sed 's/^DATABASE_URL=//')
           if [ -z "${DATABASE_URL}" ]; then
             echo "DATABASE_URL not found" >&2
             exit 1
