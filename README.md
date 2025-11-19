@@ -1,354 +1,155 @@
-# MCP Registry & Tester
+# MCP Lab
 
-A Next.js application for registering and testing Model Context Protocol (MCP) servers. This application allows you to:
+MCP Lab is a Next.js 15 dashboard for registering HTTP-based Model Context Protocol (MCP) servers, testing tools manually, or letting an LLM call those tools through a guided chat experience. Each user signs in via email, manages their own registry, and can store provider API keys that power the AI chat workflow.
 
-- Register MCP servers with custom URLs and headers
-- List all registered MCP servers
-- Connect to MCP servers and discover their tools
-- Test MCP tools with custom arguments
-- Support multiple transport protocols (stdio, HTTPS/Streamable HTTP)
+## Highlights
+- Magic-link authentication with NextAuth + Nodemailer; every feature lives behind `/auth/login`.
+- Private MCP registry per user with create/edit/delete flows under `/dashboard/mcp`.
+- Manual tool tester that renders JSON-schema forms, tracks call history, and lets you override saved headers before hitting `/api/mcp-call-tool`.
+- AI chat runner that streams responses from OpenAI or Anthropic models using the stored API keys and live MCP tool calls.
+- Credential vault at `/dashboard/credentials` for OpenAI/Anthropic API keys that the chat route reads before calling an LLM.
+- PostgreSQL + Drizzle ORM schema with typed services, delivered via Next.js App Router and server actions.
 
-## Prerequisites
+## Architecture Overview
+- **App shell**: `src/app` uses the App Router 100%; everything under `/dashboard/*` is wrapped with `SessionProvider` and the sidebar layout.
+- **Authentication**: `src/auth.ts` wires NextAuth with the Drizzle adapter and a Nodemailer provider (EMAIL_SERVER/EMAIL_FROM secrets). Sessions expose `user.id` to the client components that call APIs.
+- **Data layer**: `src/db/schema.ts` defines `mcp_servers`, `api_keys`, and the NextAuth tables. Drizzle queries live in `src/services/*`.
+- **MCP integration**: `src/lib/mcp/manager.ts` instantiates `StreamableHTTPClientTransport` from the MCP SDK and exposes `connect` plus `callTool`, which power `/api/mcp-connect` and `/api/mcp-call-tool`.
+- **Manual tester**: `src/components/mcp/manual-interaction.tsx` drives the tool list, JSON schema forms (via `@rjsf`), argument validation, and call history UI once a connection is established.
+- **Chat workflow**: `src/components/chat/*` builds the configuration sidebar, message list, and composer. `/api/chat` streams UI messages using `ai`'s `streamText`, wiring selected MCP tools as callable tool definitions.
 
-- Node.js 18+ 
-- Docker for PostgreSQL database
-- PostgreSQL database running locally
+## Transport Support
+Today the runtime only registers `http` transports (`StreamableHTTPClientTransport`). The database enum still includes `stdio` and `sse`, but the UI intentionally restricts the “Transport Type” selector to HTTP until additional transports ship. Attempting to save another type will be rejected on the backend because `McpConnectionManager` lacks the corresponding implementation.
 
-## Setup
+## Getting Started
 
-1. **Clone and install dependencies:**
+### Prerequisites
+- Node.js 18 or higher
+- npm (ships with Node)
+- Docker (optional but recommended for running PostgreSQL locally)
+- Access to an SMTP server for magic-link auth (any provider Nodemailer supports)
+
+### Setup steps
+1. **Clone & install**
    ```bash
-   git clone <your-repo>
+   git clone <repo-url>
    cd mcp-tester
    npm install
    ```
-
-2. **Start PostgreSQL database:**
+2. **Start PostgreSQL**
    ```bash
-   # If you have an existing PostgreSQL container, create the database:
-   docker exec -it <your-postgres-container> psql -U postgres -c "CREATE DATABASE mcp_registry;"
-   
-   # Or start a new one with our docker-compose.yml:
-   docker-compose up -d
+   docker compose up -d postgres
+   # or reuse an existing Postgres instance and create the mcp_registry database
    ```
-
-3. **Set up environment variables:**
-   Create a `.env.local` file in the project root:
+3. **Configure environment**
+   Create `.env.local` with the values the app reads directly:
    ```env
-   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mcp_registry"
+   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mcp_registry
+   NEXTAUTH_SECRET=replace-with-random-string
+   NEXTAUTH_URL=http://localhost:3000
+   AUTH_TRUST_HOST=http://localhost:3000
+   EMAIL_SERVER=smtp://user:pass@smtp.yourhost.com:587
+   EMAIL_FROM="MCP Lab <noreply@example.com>"
    ```
-
-4. **Run database migrations:**
+4. **Apply migrations**
    ```bash
-   npm run db:generate
    npm run db:migrate
    ```
-
-5. **Start the development server:**
+   Run `npm run db:generate` only when you edit the Drizzle schema and need a new migration; it is not required for a fresh install.
+5. **Launch the dev server**
    ```bash
    npm run dev
    ```
+6. **Visit the dashboard**
+   Open `http://localhost:3000`, request a magic link, and you’ll be redirected to `/dashboard/mcp` after confirming the email.
 
-6. **Open the application:**
-   Visit [http://localhost:3000](http://localhost:3000)
+### Helpful scripts
+- `npm run build` – Next.js production build
+- `npm run db:studio` – Launch Drizzle Studio against the configured database
+- `npm run lint` – Next.js lint pipeline
 
-## Features
+## Core Workflows
 
-### 1. Main Page (/)
-- Lists all registered MCP servers
-- Shows server details including URL, description, and custom headers
-- Quick access to register new servers or interact with existing ones
+### 1. Sign in & API keys
+1. Go to `/auth/login` and request a magic link (Nodemailer sends via `EMAIL_SERVER`).
+2. After signing in, open `/dashboard/credentials` to store provider keys. Only OpenAI (`openai`) and Anthropic (`anthropic`) are currently enumerated in `providers`.
+3. Keys are encrypted at rest by PostgreSQL access controls; only the owning user can read/update/delete them through the server actions in `src/services/key-service.ts`.
 
-### 2. Register Page (/register)
-- Form to register new MCP servers
-- Fields for name, description, URL, and custom headers
-- Dynamic header addition/removal
+### 2. Register or edit MCP servers
+- `/dashboard/mcp` lists only the current user’s servers and shows call-to-action buttons for register/edit/delete.
+- `/dashboard/register` accepts name, description, URL, HTTP headers, and (for now) forces the transport type to HTTP.
+- `/dashboard/edit/[id]` reuses the same form, loading the record via `/api/mcp-servers/[id]`.
+- Records are scoped to the user id at the API layer, so even crafted requests cannot touch another user’s servers.
 
-### 3. Edit Page (/edit/[id])
-- Pre-loads existing server data for editing
-- Same interface as register page
-- Updates server configuration
+### 3. Manual tool testing
+1. Click **Interact** on a server to load `/dashboard/mcp/[id]`.
+2. Hit **Connect to MCP Server**; the page calls `/api/mcp-connect`, which in turn uses `McpConnectionManager.connect` to list tools.
+3. Select a tool to view its description, input schema, and auto-generated form. You can also toggle a raw JSON textarea if no schema is provided.
+4. Every run hits `/api/mcp-call-tool` and logs results or errors in the **Recent Calls** list with one-click copy buttons.
+5. Header overrides are editable after expanding **More info**, letting you temporarily swap tokens without saving them permanently.
 
-### 4. MCP Interaction Page (/mcp/[id])
-- Connect to a specific MCP server
-- Discover available tools and resources
-- Test tools with custom JSON arguments
-- View call history with results/errors
-- Override headers for testing different authentication tokens
+### 4. AI chat runner
+1. Switch the interaction mode to **Chat** after connecting; MCP Lab will surface the selected server’s tools inside the chat sidebar.
+2. Choose the LLM provider/model combinations you have API keys for (models are defined in `src/lib/llm.ts`).
+3. Messages stream through `/api/chat`, which limits tool-chaining to five steps per request (`stepCountIs(5)`). Tool definitions call back into `McpConnectionManager.callTool` using the saved server headers.
+4. The chat UI shows all assistant/user messages, and it disables send while a response is pending to prevent duplicate tool executions.
 
-## Supported Transport Protocols
-
-The application supports multiple MCP transport protocols through a modular connection architecture:
-
-### 1. Local Servers (stdio://)
-For local MCP servers that run as processes:
-
-```
-stdio://node /path/to/your/server.js
-stdio://python /path/to/your/server.py
-stdio://uvx mcp-server-git --repository /path/to/repo
-```
-
-**Examples:**
-- `stdio://node weather-server.js` - Node.js weather server
-- `stdio://python filesystem-server.py` - Python filesystem server
-- `stdio://uvx mcp-server-postgres postgresql://user:pass@localhost/db` - PostgreSQL server
-
-### 2. HTTP/HTTPS Servers with Streamable HTTP
-For remote MCP servers accessible via HTTP/HTTPS using Streamable HTTP transport:
-
-```
-https://api.example.com/mcp
-https://your-server.herokuapp.com/mcp
-http://localhost:3001/mcp
-```
-
-**Key Features:**
-- **Streamable connections** using HTTP with bidirectional communication
-- **Custom headers** support for authentication
-- **Real-time communication** with remote MCP servers
-- **Session management** and connection persistence
-
-**Example HTTPS URLs:**
-- `https://mcp-server.example.com/mcp` - Remote MCP server with Streamable HTTP
-- `https://api.weather.com/mcp` - Weather API with MCP interface
-- `http://localhost:8080/mcp` - Local development server
-
-## MCP Connection Architecture
-
-The application uses a modular transport architecture with separate classes for each protocol:
-
-### File Structure
-```
-src/lib/
-├── mcp-client.ts              # Main connection manager
-└── transports/
-    ├── index.ts               # Barrel exports
-    ├── base-transport.ts      # Base interfaces & abstract class
-    ├── stdio-transport.ts     # Stdio protocol implementation
-    └── http-transport.ts      # HTTP/HTTPS protocol implementation
-```
-
-### Architecture Features
-- **Modular Design** - Each transport protocol is in its own file
-- **Type Safety** - TypeScript interfaces for all MCP operations
-- **Extensible** - Easy to add new transport protocols
-- **Automatic Protocol Detection** - Selects appropriate transport based on URL
-- **Error Handling** - Detailed error messages for troubleshooting
-- **Connection Management** - Automatic connection lifecycle management
-
-### Connection Flow
-
-1. **URL Detection** - Automatically detects protocol from URL scheme
-2. **Transport Selection** - Selects appropriate transport class (stdio, HTTP, etc.)
-3. **Client Connection** - Establishes MCP protocol connection
-4. **Capability Discovery** - Lists available tools and resources
-5. **Tool Execution** - Handles tool calls with proper argument passing
-6. **Connection Cleanup** - Automatically closes connections
-
-## Creating MCP Servers
-
-### For stdio:// connections
-
-1. **Use existing MCP servers:**
-   ```bash
-   # Install an official MCP server
-   npm install -g @modelcontextprotocol/server-filesystem
-   
-   # Register it with URL: stdio://mcp-server-filesystem /path/to/directory
-   ```
-
-2. **Create a simple MCP server:**
-   ```bash
-   # Install MCP SDK
-   npm install @modelcontextprotocol/sdk
-   
-   # Create a server following the MCP documentation
-   # Register it with URL: stdio://node your-server.js
-   ```
-
-### For https:// connections
-
-1. **Deploy MCP server with Streamable HTTP endpoint:**
-   ```typescript
-   // Example Express.js server with Streamable HTTP
-   import express from 'express';
-   import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-   import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-   
-   const app = express();
-   
-   app.all('/mcp', async (req, res) => {
-     const transport = new StreamableHTTPServerTransport({
-       sessionIdGenerator: () => randomUUID(),
-     });
-     const server = new Server({ name: 'my-server', version: '1.0.0' });
-     await server.connect(transport);
-     await transport.handleRequest(req, res, req.body);
-   });
-   ```
-
-2. **Register with HTTPS URL:**
-   ```
-   https://your-domain.com/mcp
-   ```
-
-3. **Add authentication headers if needed:**
-   - Authorization: Bearer your-token
-   - X-API-Key: your-api-key
+## API Routes
+- `GET/POST /api/mcp-servers` – list or create MCP servers for the authenticated user.
+- `GET/PUT/DELETE /api/mcp-servers/[id]` – fetch, update, or remove a single server (authorization enforced per user).
+- `POST /api/mcp-connect` – connect to a server and return tool metadata via the MCP SDK.
+- `POST /api/mcp-call-tool` – execute a specific tool with JSON arguments and return the raw MCP result.
+- `GET /api/api-keys` – expose stored provider keys to the chat configuration UI.
+- `POST /api/chat` – stream responses from the selected LLM while allowing the model to invoke MCP tools.
+- `api/auth/[...nextauth]` – handled by NextAuth for session management and email verification links.
 
 ## Database Schema
-
-The application uses PostgreSQL with Drizzle ORM. The main table structure:
+Drizzle migrations create the following key tables (simplified):
 
 ```sql
+CREATE TYPE transport_type AS ENUM ('stdio', 'http', 'sse');
+
 CREATE TABLE mcp_servers (
   id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id),
   name TEXT NOT NULL,
   description TEXT,
   url TEXT NOT NULL,
-  headers JSONB DEFAULT '{}',
-  created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+  transport_type transport_type NOT NULL DEFAULT 'http',
+  headers JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TYPE provider AS ENUM ('openai', 'anthropic');
+
+CREATE TABLE api_keys (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id),
+  provider provider NOT NULL,
+  key TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
+NextAuth adds `users`, `accounts`, `sessions`, and `verification_tokens`, all defined in `src/db/schema.ts`.
 
-## API Routes
-
-- `GET /api/mcp-servers` - List all servers
-- `POST /api/mcp-servers` - Create new server
-- `GET /api/mcp-servers/[id]` - Get server details
-- `PUT /api/mcp-servers/[id]` - Update server
-- `POST /api/mcp-connect` - Connect to MCP server (all protocols)
-- `POST /api/mcp-call-tool` - Call MCP tool (all protocols)
-
-## Transport Implementation Details
-
-### stdio:// Transport
-- Uses `StdioClientTransport` from MCP SDK
-- Spawns local processes with command-line arguments
-- Communicates via stdin/stdout pipes
-- Best for local development and testing
-
-### https:// Transport
-- Uses `StreamableHTTPClientTransport` from MCP SDK
-- Establishes bidirectional HTTP communication
-- Supports custom headers for authentication
-- Enables real-time streaming communication
-- Session-based connection management
-- Suitable for production deployments
-
-### Future Transport Support
-- WebSocket (`ws://`, `wss://`) - Planned
-- gRPC - Under consideration
-- Custom protocols - Extensible architecture
-
-## Technologies Used
-
-- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend:** Next.js API Routes
-- **Database:** PostgreSQL with Drizzle ORM
-- **MCP Integration:** @modelcontextprotocol/sdk
-- **Transport Protocols:** stdio, Streamable HTTP
-- **Development:** Docker for PostgreSQL
-
-## Database Scripts
-
-```bash
-# Generate migrations after schema changes
-npm run db:generate
-
-# Apply migrations to database
-npm run db:migrate
-
-# Open Drizzle Studio for database management
-npm run db:studio
-```
-
-## Development Notes
-
-- The application uses App Router (Next.js 13+)
-- TypeScript is configured with strict mode
-- Tailwind CSS provides styling
-- Modular MCP connection architecture with separate transport files
-- Real MCP protocol implementation for stdio:// and https:// URLs
-- Each transport protocol is implemented in its own class
+## Tech Stack
+- **Frontend**: Next.js 15 + React 19, App Router, Server Components, Tailwind 4 (via PostCSS) + shadcn/ui.
+- **Auth**: NextAuth with magic links, Drizzle adapter, SST secrets for deployment.
+- **Database**: PostgreSQL 15, Drizzle ORM, Drizzle Kit migrations.
+- **MCP**: `@modelcontextprotocol/sdk` Streamable HTTP client, manual + chat tooling.
+- **LLM SDK**: `ai` (Vercel AI SDK) with providers from `@ai-sdk/openai` and `@ai-sdk/anthropic`.
+- **Dev tooling**: ESLint 9, TypeScript 5, Turbopack-powered `next dev`.
 
 ## Troubleshooting
+- **Email login** – ensure `EMAIL_SERVER` is a valid Nodemailer connection string and that localhost is allowed as an auth host (`AUTH_TRUST_HOST` / `NEXTAUTH_URL`).
+- **Database errors** – confirm Postgres is reachable at `DATABASE_URL` and that migrations ran; Drizzle errors usually cite missing tables.
+- **MCP connection failures** – verify the remote endpoint supports Streamable HTTP (`@modelcontextprotocol/sdk` server transport) and that any required auth headers are present; CORS must allow `OPTIONS`, `POST`, and `GET`.
+- **Chat shows “API key not found”** – add a matching provider key on `/dashboard/credentials`; the chat endpoint refuses to call models without it.
+- **Tool call validation** – schemas are validated with `@rjsf/validator-ajv8`; malformed JSON or schema violations appear in the “Recent Calls” list with detailed errors.
 
-### MCP Connection Issues
-
-1. **stdio:// servers:**
-   - Verify the executable path is correct
-   - Ensure the server file exists and is executable
-   - Check that required dependencies are installed
-
-2. **https:// servers:**
-   - Verify the server URL is accessible
-   - Check that the server supports Streamable HTTP transport
-   - Ensure CORS is properly configured on the server
-   - Verify authentication headers if required
-
-3. **Tool call failures:**
-   - Verify the tool name exists on the server
-   - Check that arguments match the tool's schema
-   - Review server logs for errors
-
-### Example Working Servers
-
-**Local (stdio://):**
-```bash
-stdio://node weather-server.js
-stdio://uvx mcp-server-filesystem /path/to/directory
-stdio://uvx mcp-server-git --repository /path/to/git/repo
-```
-
-**Remote (https://):**
-```bash
-https://api.example.com/mcp
-https://mcp-server.herokuapp.com/mcp
-http://localhost:8080/mcp
-```
-
-## Adding New Transport Protocols
-
-The modular architecture makes it easy to add new transport protocols:
-
-1. **Create a new transport file:**
-   ```typescript
-   // src/lib/transports/websocket-transport.ts
-   import { BaseMcpTransport } from './base-transport.js';
-   
-   export class WebSocketMcpTransport extends BaseMcpTransport {
-     supportsProtocol(url: string): boolean {
-       return url.startsWith('ws://') || url.startsWith('wss://');
-     }
-     
-     async connect(url: string, headers?: Record<string, string>) {
-       // WebSocket implementation
-     }
-     
-     async callTool(url: string, toolName: string, toolArgs: any, headers?: Record<string, string>) {
-       // WebSocket tool call implementation
-     }
-   }
-   ```
-
-2. **Register the transport:**
-   ```typescript
-   import { McpConnectionManager } from '@/lib/mcp-client';
-   import { WebSocketMcpTransport } from '@/lib/transports/websocket-transport';
-   
-   McpConnectionManager.registerTransport(new WebSocketMcpTransport());
-   ```
-
-## Future Enhancements
-
-- WebSocket transport support (`ws://`, `wss://`)
-- Connection pooling and session persistence
-- Server status monitoring and health checks
-- Resource browsing and interaction UI
-- Authentication and authorization middleware
-- Bulk import/export of server configurations
-- Advanced tool testing with schema validation
-- Real-time server monitoring dashboard
+## Roadmap
+- Add stdio/SSE transport implementations to `McpConnectionManager`.
+- Surface MCP resources alongside tools inside the interaction UI.
+- Support additional LLM providers and per-tool key selection.
+- Bulk import/export for MCP server definitions and shared workspaces.
