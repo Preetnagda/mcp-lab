@@ -22,7 +22,7 @@ export function EmailLoginForm() {
 		const email = formData.get('email') as string;
 
 		try {
-			const result = await signIn("nodemailer", {
+			const result = await signIn("mailgun", {
 				email,
 				redirect: false,
 			});

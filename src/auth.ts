@@ -1,15 +1,15 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import NextAuth from "next-auth"
-import Nodemailer from "next-auth/providers/nodemailer"
+import Mailgun from "next-auth/providers/mailgun"
 import type { Provider } from "next-auth/providers"
 import { db } from "@/db";
 import { users, accounts, sessions, verificationTokens } from "@/db/schema";
 import { Resource } from "sst";
 
 const providers: Provider[] = [
-	Nodemailer({
-		server: Resource.EMAIL_SERVER.value,
-		from: Resource.EMAIL_FROM.value
+	Mailgun({
+		apiKey: Resource.EMAIL_API_KEY.value,
+		from: Resource.EMAIL_FROM.value 
 	})
 ]
 

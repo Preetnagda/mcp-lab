@@ -15,7 +15,7 @@ export default $config({
     const secrets = {
       DATABASE_URL: new sst.Secret("DATABASE_URL","postgresql://postgres:postgres@localhost:5432/mcp_registry"), 
       NEXTAUTH_SECRET: new sst.Secret("NEXTAUTH_SECRET"),
-      EMAIL_SERVER: new sst.Secret("EMAIL_SERVER"),
+      EMAIL_API_KEY: new sst.Secret("EMAIL_API_KEY"),
       EMAIL_FROM: new sst.Secret("EMAIL_FROM"),
     }
 

@@ -9,11 +9,11 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "EMAIL_FROM": {
+    "EMAIL_API_KEY": {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "EMAIL_SERVER": {
+    "EMAIL_FROM": {
       "type": "sst.sst.Secret"
       "value": string
     }
