@@ -8,6 +8,7 @@ import { Resource } from "sst";
 
 const providers: Provider[] = [
 	Mailgun({
+		name: "MCP Lab",
 		apiKey: Resource.EMAIL_API_KEY.value,
 		from: Resource.EMAIL_FROM.value 
 	})
