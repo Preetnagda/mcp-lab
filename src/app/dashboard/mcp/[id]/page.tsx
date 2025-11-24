@@ -251,7 +251,7 @@ export default function McpPage() {
 						<div>
 							<div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
 								<span className="text-sm font-medium text-muted-foreground">Interaction Mode</span>
-								<div className="inline-flex overflow-hidden rounded-md border border-input">
+								<div className="inline-flex overflow-hidden rounded-md border border-input max-w-fit">
 									<Button
 										variant="ghost"
 										size="sm"

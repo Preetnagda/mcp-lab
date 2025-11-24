@@ -116,7 +116,7 @@ export default function Chat({ mcpServer, tools, className }: ChatProps) {
 	};
 
 	return (
-		<div className={cn("grid h-full min-h-0 gap-8 lg:grid-cols-6", className)}>
+		<div className={cn("lg:grid h-full min-h-0 gap-8 lg:grid-cols-6", className)}>
 			<ChatConfiguration
 				className="col-span-2 flex h-full min-h-0 flex-col"
 				tokensUsed={toolsTokens}
@@ -127,7 +127,7 @@ export default function Chat({ mcpServer, tools, className }: ChatProps) {
 				onSelectedToolsChange={setSelectedTools}
 				models={modelOptions}
 			/>
-			<main className="col-span-4 flex h-full min-h-0 flex-col rounded-2xl border bg-card">
+			<main className="col-span-4 flex min-h-[50%] flex-col rounded-2xl border bg-card lg:h-full">
 				<div className="flex-1 overflow-y-auto px-4 py-6">
 					<div className="space-y-4">
 						{messages.map((message) => {
