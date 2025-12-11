@@ -7,7 +7,7 @@ const providerMap = new Map<string, CallableFunction>([
 ]);
 
 export const models = {
-	openai: ['gpt-4o-mini', 'gpt-4o'],
+	openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-5.1'],
 	anthropic: ['claude-4.5-sonnet', 'claude-opus']
 };
 
