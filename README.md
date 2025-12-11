@@ -1,6 +1,10 @@
 # MCP Lab
 
+![MCP Lab Demo](./docs/mcp-lab-demo.gif)
+
 MCP Lab is a Next.js 15 dashboard for registering HTTP-based Model Context Protocol (MCP) servers, testing tools manually, or letting an LLM call those tools through a guided chat experience. Each user signs in via email, manages their own registry, and can store provider API keys that power the AI chat workflow.
+
+Access Live: [MCP Lab](https://mcp-lab.preetnagda.com)
 
 ## Highlights
 - Magic-link authentication with NextAuth + Nodemailer; every feature lives behind `/auth/login`.
