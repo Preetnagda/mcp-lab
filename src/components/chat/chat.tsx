@@ -9,7 +9,6 @@ import ChatConfiguration, {
 import { Message } from "@/components/chat/message";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { DefaultChatTransport } from "ai";
 import { McpTool } from "@/lib/mcp/types";
 import { McpServer } from "@/db/schema";
 import { cn } from "@/lib/utils";
@@ -69,12 +68,9 @@ export default function Chat({ mcpServer, tools, className }: ChatProps) {
 	}, []);
 
 	const { messages, sendMessage } = useChat({
-		transport: new DefaultChatTransport({
-			api: "/api/chat",
-		}),
 		onFinish: () => {
 			setIsResponding(false);
-		}
+		},
 	});
 
 	const { toolsTokens } = useMemo(() => {
@@ -131,12 +127,12 @@ export default function Chat({ mcpServer, tools, className }: ChatProps) {
 				<div className="flex-1 overflow-y-auto px-4 py-6">
 					<div className="space-y-4">
 						{messages.map((message) => {
-							if (!message.parts) return null;
+							if (!message.parts || message.parts.length === 0) return null;
 							return (
 								<Message
 									key={message.id}
 									parts={message.parts}
-									isUser={message.role == "user"}
+									isUser={message.role === "user"}
 								/>
 							);
 						})}
