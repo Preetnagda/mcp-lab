@@ -1,4 +1,6 @@
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface MessageProps {
 	parts: any;
@@ -40,9 +42,86 @@ export function Message({ parts, isUser }: MessageProps) {
 				{parts.map((part: any, index: number) => {
 					if (part.type === "text") {
 						return (
-							<span key={index} className="block whitespace-pre-wrap leading-relaxed">
+							<div
+								key={index}
+								className="prose dark:prose-invert max-w-none break-words leading-relaxed"
+							>
+								<ReactMarkdown
+									remarkPlugins={[remarkGfm]}
+									components={{
+									ol: ({ children }) => (
+										<ol className="list-decimal pl-4 mb-2 last:mb-0">{children}</ol>
+									),
+									ul: ({ children }) => (
+										<ul className="list-disc pl-4 mb-2 last:mb-0">{children}</ul>
+									),
+									li: ({ children }) => <li className="mb-1 last:mb-0">{children}</li>,
+									a: ({ children, href }) => (
+										<a
+											href={href}
+											className={cn(
+												"underline font-medium",
+												isUser
+													? "text-primary-foreground hover:text-primary-foreground/80"
+													: "text-primary hover:text-primary/80"
+											)}
+											target="_blank"
+											rel="noopener noreferrer"
+										>
+											{children}
+										</a>
+									),
+									p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+									h1: ({ children }) => (
+										<h1 className="text-xl font-bold mb-2">{children}</h1>
+									),
+									h2: ({ children }) => (
+										<h2 className="text-lg font-bold mb-2">{children}</h2>
+									),
+									h3: ({ children }) => (
+										<h3 className="text-base font-bold mb-2">{children}</h3>
+									),
+									blockquote: ({ children }) => (
+										<blockquote
+											className={cn(
+												"border-l-2 pl-4 italic my-2",
+												isUser ? "border-primary-foreground/50" : "border-primary/50"
+											)}
+										>
+											{children}
+										</blockquote>
+									),
+									pre: ({ children }) => (
+										<pre
+											className={cn(
+												"p-3 rounded-lg overflow-x-auto my-2 border [&>code]:bg-transparent [&>code]:p-0",
+												isUser
+													? "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground"
+													: "bg-muted border-border text-foreground"
+											)}
+										>
+											{children}
+										</pre>
+									),
+									code: ({ className, children, ...props }: any) => (
+										<code
+											className={cn(
+												"px-1 py-0.5 rounded font-mono text-sm",
+												isUser
+													? "bg-primary-foreground/20 text-primary-foreground"
+													: "bg-muted text-foreground",
+												className
+											)}
+											{...props}
+										>
+											{children}
+										</code>
+									),
+								}}
+							>
 								{part.text}
-							</span>
+							</ReactMarkdown>
+							</div>
 						);
 					}
 

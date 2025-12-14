@@ -7,7 +7,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "dev": "next dev --turbopack",
+    "dev": "npx sst dev -- next dev --turbopack",
     "lint": "next lint",
     "start": "next start"
   },
@@ -51,6 +51,8 @@
     "postgres-js": "^0.1.0",
     "react": "^19.1.2",
     "react-dom": "^19.1.2",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "sst": "3.17.23",
     "tailwind-merge": "^3.3.0"
   },
