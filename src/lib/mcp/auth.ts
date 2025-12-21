@@ -1,10 +1,8 @@
 import { Resource } from 'sst';
 import * as oauth from 'oauth4webapi';
 import { db } from '@/db';
-import { oauthClients, mcpServers } from '@/db/schema';
+import { oauthClients } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { encrypt } from '@/lib/crypt';
 
 export class McpAuthRequiredError extends Error {
 	constructor(
@@ -155,7 +153,6 @@ export async function initiateAuthFlow(mcpUrl: string, mcpId?: number) {
 	authorizationUrl.searchParams.set('client_id', client.client_id);
 	authorizationUrl.searchParams.set('redirect_uri', `${process.env.NEXTAUTH_URL}/api/auth/mcp/callback`);
 	authorizationUrl.searchParams.set('response_type', 'code');
-	// authorizationUrl.searchParams.set('scope', 'offline_access'); // Adjust scopes as needed
 	authorizationUrl.searchParams.set('code_challenge', code_challenge);
 	authorizationUrl.searchParams.set('code_challenge_method', 'S256');
 	authorizationUrl.searchParams.set('nonce', nonce);
@@ -165,7 +162,7 @@ export async function initiateAuthFlow(mcpUrl: string, mcpId?: number) {
 		authorizationUrl: authorizationUrl.toString(),
 		codeVerifier: code_verifier,
 		nonce,
-		state, // This is the base64 encoded state sent to the server
+		state,
 		mcpServerUrl: mcpUrl
 	};
 }
