@@ -14,16 +14,7 @@ export async function GET(request: NextRequest) {
     }
     const userId = session.user.id;
 
-    // Get cookies
-    const storedState = request.cookies.get('mcp_auth_state')?.value;
-    const codeVerifier = request.cookies.get('mcp_code_verifier')?.value;
-    const nonce = request.cookies.get('mcp_oidc_nonce')?.value;
-
-    if (!storedState || !codeVerifier || !nonce) {
-        return NextResponse.json({ error: 'Missing state, code verifier, or nonce cookies' }, { status: 400 });
-    }
-
-    // Get URL params
+	// Get URL params
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get('code');
     const state = searchParams.get('state');
@@ -32,18 +23,33 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Missing code or state parameter' }, { status: 400 });
     }
 
-    if (state !== storedState) {
-        return NextResponse.json({ error: 'State mismatch' }, { status: 400 });
-    }
-
     try {
-        // Decode state
+        // Decode state first to get mcpId for cookie lookup
         const stateJson = Buffer.from(state, 'base64').toString('utf8');
         const { mcpId, url: mcpUrl } = JSON.parse(stateJson);
 
         if (!mcpUrl) {
             throw new Error('Invalid state payload: missing URL');
         }
+
+		// Construct dynamic cookie names
+		const cookieSuffix = mcpId ? `_${mcpId}` : '';
+		const stateCookieName = `mcp_auth_state${cookieSuffix}`;
+		const verifierCookieName = `mcp_code_verifier${cookieSuffix}`;
+		const nonceCookieName = `mcp_oidc_nonce${cookieSuffix}`;
+
+		// Get cookies
+		const storedState = request.cookies.get(stateCookieName)?.value;
+		const codeVerifier = request.cookies.get(verifierCookieName)?.value;
+		const nonce = request.cookies.get(nonceCookieName)?.value;
+
+		if (!storedState || !codeVerifier || !nonce) {
+			return NextResponse.json({ error: 'Missing state, code verifier, or nonce cookies' }, { status: 400 });
+		}
+
+		if (state !== storedState) {
+			return NextResponse.json({ error: 'State mismatch' }, { status: 400 });
+		}
 
         // Reconstruct AS and Client
         const as = await getIssuerConfig(mcpUrl);
@@ -111,9 +117,9 @@ export async function GET(request: NextRequest) {
         // Since I don't know the exact route for "view mcp server", I'll default to /dashboard
         const url = mcpId ? `/dashboard/mcp/${mcpId}?auto_connect=true` : '/dashboard/mcp';
         const res = NextResponse.redirect(new URL(url, request.url));
-        res.cookies.delete('mcp_auth_state');
-        res.cookies.delete('mcp_code_verifier');
-        res.cookies.delete('mcp_oidc_nonce');
+        res.cookies.delete(stateCookieName);
+        res.cookies.delete(verifierCookieName);
+        res.cookies.delete(nonceCookieName);
         return res;
 
     } catch (error: any) {

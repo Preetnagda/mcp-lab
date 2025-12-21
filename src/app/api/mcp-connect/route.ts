@@ -29,9 +29,10 @@ export async function POST(request: NextRequest) {
 	} catch (error) {
         if (error instanceof McpAuthRequiredError) {
             const response = NextResponse.json({ redirectUrl: error.authorizationUrl }, { status: 401 });
-            response.cookies.set('mcp_auth_state', error.state, { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
-            response.cookies.set('mcp_code_verifier', error.codeVerifier, { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
-            response.cookies.set('mcp_oidc_nonce', error.nonce, { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
+			const cookieSuffix = error.mcpId ? `_${error.mcpId}` : '';
+            response.cookies.set(`mcp_auth_state${cookieSuffix}`, error.state, { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
+            response.cookies.set(`mcp_code_verifier${cookieSuffix}`, error.codeVerifier, { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
+            response.cookies.set(`mcp_oidc_nonce${cookieSuffix}`, error.nonce, { httpOnly: true, secure: process.env.NODE_ENV === 'production', path: '/' });
             return response;
         }
 

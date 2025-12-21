@@ -12,7 +12,8 @@ export class McpAuthRequiredError extends Error {
 		public state: string,
 		public codeVerifier: string,
 		public nonce: string,
-		public mcpServerUrl: string
+		public mcpServerUrl: string,
+		public mcpId?: number
 	) {
 		super('MCP Server requires authentication');
 		this.name = 'McpAuthRequiredError';

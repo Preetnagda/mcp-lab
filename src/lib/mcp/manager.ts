@@ -52,7 +52,8 @@ export class McpConnectionManager {
 								authFlow.state,
 								authFlow.codeVerifier,
 								authFlow.nonce,
-								url
+								url,
+								mcpId
 							);
 						} catch (authError) {
 							if (authError instanceof McpAuthRequiredError) {
