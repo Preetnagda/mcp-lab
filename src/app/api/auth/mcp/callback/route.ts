@@ -55,6 +55,15 @@ export async function GET(request: NextRequest) {
         const as = await getIssuerConfig(mcpUrl);
         const client = await getOrRegisterClient(new URL(as.issuer), as);
 
+        // Handle trailing slash inconsistency between discovery and callback
+        if (searchParams.has('iss')) {
+             const iss = searchParams.get('iss');
+             if (iss && as.issuer !== iss && as.issuer.replace(/\/$/, '') === iss) {
+                  console.log(`Normalizing issuer from ${as.issuer} to ${iss}`);
+                  (as as any).issuer = iss;
+             }
+        }
+
         // Exchange code
         const params = oauth.validateAuthResponse(as, client, searchParams, storedState);
         if (params.has('error')) {
