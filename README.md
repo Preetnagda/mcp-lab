@@ -7,20 +7,22 @@ MCP Lab is a Next.js 15 dashboard for registering HTTP-based Model Context Proto
 Access Live: [MCP Lab](https://mcp-lab.preetnagda.com)
 
 ## Highlights
-- Magic-link authentication with NextAuth + Nodemailer; every feature lives behind `/auth/login`.
-- Private MCP registry per user with create/edit/delete flows under `/dashboard/mcp`.
-- Manual tool tester that renders JSON-schema forms, tracks call history, and lets you override saved headers before hitting `/api/mcp-call-tool`.
-- AI chat runner that streams responses from OpenAI or Anthropic models using the stored API keys and live MCP tool calls.
-- Credential vault at `/dashboard/credentials` for OpenAI/Anthropic API keys that the chat route reads before calling an LLM.
-- PostgreSQL + Drizzle ORM schema with typed services, delivered via Next.js App Router and server actions.
+- **Inspect Capabilities**: View available tools, read detailed descriptions, and analyze JSON input schemas for each tool.
+- **OAuth Integration**: Built-in support for connecting to MCP servers that require OAuth authentication (requires Dynamic Client Registration, RFC 7591 support on the server).
+- **Custom Headers**: Define and inject custom headers (e.g., API keys, auth tokens) for your MCP server requests.
+- **Dual Interaction Modes**: Manually interact with MCP tools via generated forms or let an LLM orchestrate the interaction.
+- **Context Awareness**: Check approximate context overhead and monitor token usage for each connected MCP server.
 
-## Architecture Overview
-- **App shell**: `src/app` uses the App Router 100%; everything under `/dashboard/*` is wrapped with `SessionProvider` and the sidebar layout.
-- **Authentication**: `src/auth.ts` wires NextAuth with the Drizzle adapter and a Nodemailer provider (EMAIL_SERVER/EMAIL_FROM secrets). Sessions expose `user.id` to the client components that call APIs.
-- **Data layer**: `src/db/schema.ts` defines `mcp_servers`, `api_keys`, and the NextAuth tables. Drizzle queries live in `src/services/*`.
-- **MCP integration**: `src/lib/mcp/manager.ts` instantiates `StreamableHTTPClientTransport` from the MCP SDK and exposes `connect` plus `callTool`, which power `/api/mcp-connect` and `/api/mcp-call-tool`.
-- **Manual tester**: `src/components/mcp/manual-interaction.tsx` drives the tool list, JSON schema forms (via `@rjsf`), argument validation, and call history UI once a connection is established.
-- **Chat workflow**: `src/components/chat/*` builds the configuration sidebar, message list, and composer. `/api/chat` streams UI messages using `ai`'s `streamText`, wiring selected MCP tools as callable tool definitions.
+## Deployment Architecture
+![Deployment Architecture](docs/opennext-serverless-simplified.png)
+
+The application is deployed using **SST** on AWS, leveraging **[OpenNext](https://opennext.js.org/)** to adapt Next.js for a serverless environment. OpenNext transforms the Next.js build output into a format compatible with AWS Lambda and other serverless platforms.
+
+For a deeper dive into how OpenNext structures the deployment, please refer to their [Architecture Documentation](https://opennext.js.org/aws/inner_workings/architecture).
+- **Compute**: Runs on AWS Lambda, allowing for infinite scaling and zero idle costs.
+- **CDN**: AWS CloudFront serves static assets and caches content at the edge for low latency.
+- **Storage**: User data and configurations are stored in a managed PostgreSQL database.
+- **Security**: Environment variables and secrets are securely managed via SST's secret management.
 
 ## Transport Support
 Today the runtime only registers `http` transports (`StreamableHTTPClientTransport`). The database enum still includes `stdio` and `sse`, but the UI intentionally restricts the “Transport Type” selector to HTTP until additional transports ship. Attempting to save another type will be rejected on the backend because `McpConnectionManager` lacks the corresponding implementation.
@@ -29,9 +31,8 @@ Today the runtime only registers `http` transports (`StreamableHTTPClientTranspo
 
 ### Prerequisites
 - Node.js 18 or higher
-- npm (ships with Node)
-- Docker (optional but recommended for running PostgreSQL locally)
-- Access to an SMTP server for magic-link auth (any provider Nodemailer supports)
+- AWS credentials configured locally (or utilize a profile)
+- A PostgreSQL database URL (local or remote)
 
 ### Setup steps
 1. **Clone & install**
@@ -40,31 +41,25 @@ Today the runtime only registers `http` transports (`StreamableHTTPClientTranspo
    cd mcp-tester
    npm install
    ```
-2. **Start PostgreSQL**
+2. **Configure Secrets**
+   Initialize the required secrets using SST:
    ```bash
-   docker compose up -d postgres
-   # or reuse an existing Postgres instance and create the mcp_registry database
+   npx sst secret set DATABASE_URL "postgresql://user:pass@host:5432/mcp_registry"
+   npx sst secret set NEXTAUTH_SECRET "your-random-secret"
+   npx sst secret set EMAIL_API_KEY "your-email-provider-api-key"
+   npx sst secret set EMAIL_FROM "noreply@example.com"
+   npx sst secret set ENCRYPTION_KEY "your-32-char-encryption-key"
    ```
-3. **Configure environment**
-   Create `.env.local` with the values the app reads directly:
-   ```env
-   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mcp_registry
-   NEXTAUTH_SECRET=replace-with-random-string
-   NEXTAUTH_URL=http://localhost:3000
-   AUTH_TRUST_HOST=http://localhost:3000
-   EMAIL_SERVER=smtp://user:pass@smtp.yourhost.com:587
-   EMAIL_FROM="MCP Lab <noreply@example.com>"
-   ```
-4. **Apply migrations**
+3. **Apply migrations**
    ```bash
    npm run db:migrate
    ```
-   Run `npm run db:generate` only when you edit the Drizzle schema and need a new migration; it is not required for a fresh install.
-5. **Launch the dev server**
+4. **Launch the dev server**
    ```bash
-   npm run dev
+   npx sst dev
    ```
-6. **Visit the dashboard**
+   This will start the local development environment and link it to your AWS sandbox.
+5. **Visit the dashboard**
    Open `http://localhost:3000`, request a magic link, and you’ll be redirected to `/dashboard/mcp` after confirming the email.
 
 ### Helpful scripts
@@ -98,6 +93,12 @@ Today the runtime only registers `http` transports (`StreamableHTTPClientTranspo
 3. Messages stream through `/api/chat`, which limits tool-chaining to five steps per request (`stepCountIs(5)`). Tool definitions call back into `McpConnectionManager.callTool` using the saved server headers.
 4. The chat UI shows all assistant/user messages, and it disables send while a response is pending to prevent duplicate tool executions.
 
+### 5. OAuth Connection Flow
+1. If an MCP server requires authentication (401 response) and supports Dynamic Client Registration (RFC 7591), the system initiates an OAuth 2.0 Authorization Code flow with PKCE.
+2. You are redirected to the provider's login page to authorize the application.
+3. Upon success, you are redirected back to the dashboard (`/api/auth/mcp/callback`), where the access token is securely encrypted and stored.
+4. The dashboard automatically reconnects (`auto_connect=true`), now using the stored token for all subsequent requests.
+
 ## API Routes
 - `GET/POST /api/mcp-servers` – list or create MCP servers for the authenticated user.
 - `GET/PUT/DELETE /api/mcp-servers/[id]` – fetch, update, or remove a single server (authorization enforced per user).
@@ -106,36 +107,6 @@ Today the runtime only registers `http` transports (`StreamableHTTPClientTranspo
 - `GET /api/api-keys` – expose stored provider keys to the chat configuration UI.
 - `POST /api/chat` – stream responses from the selected LLM while allowing the model to invoke MCP tools.
 - `api/auth/[...nextauth]` – handled by NextAuth for session management and email verification links.
-
-## Database Schema
-Drizzle migrations create the following key tables (simplified):
-
-```sql
-CREATE TYPE transport_type AS ENUM ('stdio', 'http', 'sse');
-
-CREATE TABLE mcp_servers (
-  id SERIAL PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id),
-  name TEXT NOT NULL,
-  description TEXT,
-  url TEXT NOT NULL,
-  transport_type transport_type NOT NULL DEFAULT 'http',
-  headers JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE TYPE provider AS ENUM ('openai', 'anthropic');
-
-CREATE TABLE api_keys (
-  id SERIAL PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES users(id),
-  provider provider NOT NULL,
-  key TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
-NextAuth adds `users`, `accounts`, `sessions`, and `verification_tokens`, all defined in `src/db/schema.ts`.
 
 ## Tech Stack
 - **Frontend**: Next.js 15 + React 19, App Router, Server Components, Tailwind 4 (via PostCSS) + shadcn/ui.
@@ -153,7 +124,6 @@ NextAuth adds `users`, `accounts`, `sessions`, and `verification_tokens`, all de
 - **Tool call validation** – schemas are validated with `@rjsf/validator-ajv8`; malformed JSON or schema violations appear in the “Recent Calls” list with detailed errors.
 
 ## Roadmap
-- Add stdio/SSE transport implementations to `McpConnectionManager`.
 - Surface MCP resources alongside tools inside the interaction UI.
 - Support additional LLM providers and per-tool key selection.
-- Bulk import/export for MCP server definitions and shared workspaces.
+- Pre registered client_id and secret support for OAuth flow.
