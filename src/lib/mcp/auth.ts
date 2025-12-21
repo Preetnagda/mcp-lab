@@ -26,14 +26,35 @@ export async function getIssuerConfig(baseUrl: string) {
 	const tryDiscovery = async (url: URL) => {
 		try {
 			const response = await oauth.discoveryRequest(url, { algorithm: 'oauth2' });
-			return await oauth.processDiscoveryResponse(url, response);
+			if (!response.ok) throw new Error('OAuth2 endpoint not found');
+
+			const clone = response.clone();
+			try {
+				return await oauth.processDiscoveryResponse(url, response);
+			} catch (e) {
+				console.warn('Strict OAuth discovery validation failed, attempting manual parsing:', e);
+				const json = (await clone.json()) as oauth.AuthorizationServer;
+				if (json.issuer) return json;
+				throw e;
+			}
 		} catch (e) {
+			console.log('OAuth2 discovery failed, trying OIDC:', e);
 			// Fallback to OIDC
 		}
 
 		try {
 			const response = await oauth.discoveryRequest(url);
-			return await oauth.processDiscoveryResponse(url, response);
+			if (!response.ok) throw new Error('OIDC endpoint not found');
+
+			const clone = response.clone();
+			try {
+				return await oauth.processDiscoveryResponse(url, response);
+			} catch (e) {
+				console.warn('Strict OIDC discovery validation failed, attempting manual parsing:', e);
+				const json = (await clone.json()) as oauth.AuthorizationServer;
+				if (json.issuer) return json;
+				throw e;
+			}
 		} catch (e) {
 			throw e;
 		}
@@ -77,7 +98,7 @@ export async function getOrRegisterClient(issuer: URL, as: oauth.AuthorizationSe
 	}
 
 	const registrationResponse = await oauth.dynamicClientRegistrationRequest(as, {
-		client_name: Resource.App.name,
+		client_name: `${Resource.App.name}-${Resource.App.stage}`,
 		redirect_uris: [`${process.env.NEXTAUTH_URL}/api/auth/mcp/callback`],
 		grant_types: ['authorization_code'],
 		response_types: ['code'],
@@ -99,14 +120,14 @@ export async function getOrRegisterClient(issuer: URL, as: oauth.AuthorizationSe
 	}
 
 	// Store in DB
-	if (!clientResult.client_id || !clientResult.client_secret) {
-		throw new Error('Registration failed to return client_id or client_secret');
+	if (!clientResult.client_id) {
+		throw new Error('Registration failed to return client_id');
 	}
 
 	await db.insert(oauthClients).values({
 		issuer: issuerString,
 		clientId: clientResult.client_id as string,
-		clientSecret: clientResult.client_secret as string,
+		clientSecret: (clientResult.client_secret as string) || null,
 		registrationPayload: clientResult as any
 	});
 

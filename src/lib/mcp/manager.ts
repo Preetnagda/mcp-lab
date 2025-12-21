@@ -43,6 +43,7 @@ export class McpConnectionManager {
 		const { headers: updatedHeaders, hasAuthHeader } = this.buildHeaders(headers, oauthTokens ?? undefined);
 		return this.connectToMcp(url, transportType, updatedHeaders)
 			.catch(async (error) => {
+				console.log('error', error);
 				if ('code' in error && error.code === 401) {
 					if (!hasAuthHeader) {
 						try {
