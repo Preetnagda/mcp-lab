@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 		return new Response('API key for selected model provider not found', { status: 400 });
 	}
 
-	const { url, headers, transportType } = server;
+	const { url, headers, transportType, id } = server;
 
 	let allTools: ToolSet = {};
 	tools.map(tool => {
@@ -55,7 +55,9 @@ export async function POST(req: Request) {
 					transportType as TransportType,
 					tool.name,
 					toolArgs,
-					headers as Record<string, string>
+					headers as Record<string, string>,
+					id,
+					session
 				)
 			}
 		} as any

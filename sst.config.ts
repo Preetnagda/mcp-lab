@@ -17,6 +17,7 @@ export default $config({
       NEXTAUTH_SECRET: new sst.Secret("NEXTAUTH_SECRET"),
       EMAIL_API_KEY: new sst.Secret("EMAIL_API_KEY"),
       EMAIL_FROM: new sst.Secret("EMAIL_FROM"),
+      ENCRYPTION_KEY: new sst.Secret("ENCRYPTION_KEY")
     }
 
     const allSecrets = Object.values(secrets);
@@ -29,7 +30,8 @@ export default $config({
       environment: {
         NEXTAUTH_SECRET: secrets.NEXTAUTH_SECRET.value,
         NEXTAUTH_URL: domainProtocol + "://" + domainName,
-        AUTH_TRUST_HOST: domainProtocol + "://" + domainName
+        AUTH_TRUST_HOST: domainProtocol + "://" + domainName,
+        ENCRYPTION_KEY: secrets.ENCRYPTION_KEY.value
       },
       domain: {
         name: domainName

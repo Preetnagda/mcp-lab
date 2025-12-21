@@ -17,6 +17,7 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 type ManualServer = {
 	url: string;
 	transportType: 'stdio' | 'http' | 'sse';
+	id: number;
 };
 
 interface ToolCall {
@@ -149,6 +150,7 @@ export default function ManualInteraction({
 					headers: getHeaders(),
 					toolName: selectedTool.name,
 					arguments: parsedArgs,
+					id: server.id,
 				}),
 			});
 

@@ -187,6 +187,11 @@ export default function RegisterPage() {
                     </Button>
                   </div>
                 ))}
+                {headers.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Skip authorization header to attempt to connect using OAuth
+                  </p>
+                )}
               </div>
             )}
 
