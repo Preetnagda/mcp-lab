@@ -99,8 +99,7 @@ export async function getOrRegisterClient(issuer: URL, as: oauth.AuthorizationSe
 		client_name: `${Resource.App.name}-${Resource.App.stage}`,
 		redirect_uris: [`${process.env.NEXTAUTH_URL}/api/auth/mcp/callback`],
 		grant_types: ['authorization_code'],
-		response_types: ['code'],
-		scope: ''
+		response_types: ['code']
 	});
 
 	const responseClone = registrationResponse.clone();
