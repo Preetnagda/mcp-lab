@@ -17,6 +17,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "ENCRYPTION_KEY": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "NEXTAUTH_SECRET": {
       "type": "sst.sst.Secret"
       "value": string

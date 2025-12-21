@@ -25,3 +25,12 @@ export const getMCPServers = async (session: Session, params?: GetMCPServersPara
 
 	return queryResults;
 }
+
+export const getMcpServerForUser = async (session: Session, id: number) => {
+	if (!session.user) {
+		return null;
+	}
+	const queryResults = await db.select().from(mcpServers)
+		.where(and(eq(mcpServers.userId, session.user.id), eq(mcpServers.id, id)));
+	return queryResults[0];
+}

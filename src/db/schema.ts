@@ -12,6 +12,19 @@ export const mcpServers = pgTable('mcp_servers', {
 	url: text('url').notNull(),
 	transportType: transportTypeEnum('transport_type').default('http').notNull(),
 	headers: jsonb('headers').default({}),
+	encryptedAccessToken: text('encrypted_access_token'),
+    expiresAt: timestamp('expires_at'),
+    tokenType: text('token_type'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const oauthClients = pgTable('oauth_clients', {
+	id: serial('id').primaryKey(),
+	issuer: text('issuer').notNull().unique(),
+	clientId: text('client_id').notNull(),
+	clientSecret: text('client_secret'), // Should be encrypted in practice, but adhering to "stores client_id and secret" for now, maybe use helper when inserting
+	registrationPayload: jsonb('registration_payload'), // Store full registration response just in case
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

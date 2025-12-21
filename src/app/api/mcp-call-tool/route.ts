@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { McpConnectionManager, TransportType } from '@/lib/mcp/manager';
+import { auth } from '@/auth';
+import { Session } from 'next-auth';
 
 export async function POST(request: NextRequest) {
 	try {
 		const body = await request.json();
-		const { url, transportType, headers, toolName, arguments: toolArgs } = body;
+		const session = await auth();
+		const { url, transportType, headers, toolName, arguments: toolArgs, id } = body;
 
-		if (!url || !toolName) {
+		if (!url || !toolName || !id) {
 			return NextResponse.json(
-				{ message: 'Server URL and tool name are required' },
+				{ message: 'Server URL, tool name and MCP ID are required' },
 				{ status: 400 }
 			);
 		}
@@ -18,7 +21,9 @@ export async function POST(request: NextRequest) {
 			transportType as TransportType,
 			toolName,
 			toolArgs || {},
-			headers || {}
+			headers || {},
+			id,
+			session as Session
 		)
 
 		return NextResponse.json(result);

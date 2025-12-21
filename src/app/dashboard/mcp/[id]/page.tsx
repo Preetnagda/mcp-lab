@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import ManualInteraction from '@/components/mcp/manual-interaction';
 import Chat from '@/components/chat/chat';
 import { McpTool, McpResource } from '@/lib/mcp/types';
-import { McpServer } from '@/db/schema';
+import { McpServer, mcpServers } from '@/db/schema';
 import { useSession } from 'next-auth/react';
 
 const isStringRecord = (value: unknown): value is Record<string, string> => {
@@ -23,6 +23,7 @@ const isStringRecord = (value: unknown): value is Record<string, string> => {
 export default function McpPage() {
 	const params = useParams();
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { data: session } = useSession();
 	const [interactionType, setInteractionType] = useState<'manual' | 'chat'>('manual');
 	const [server, setServer] = useState<McpServer | null>(null);
@@ -34,6 +35,7 @@ export default function McpPage() {
 	const [connectionError, setConnectionError] = useState<string | null>(null);
 	const [headerOverrides, setHeaderOverrides] = useState<Record<string, string>>({});
 	const [showServerInfo, setShowServerInfo] = useState(false);
+	const autoConnectAttempted = useRef(false);
 
 	const loadServer = useCallback(async () => {
 		try {
@@ -73,13 +75,7 @@ export default function McpPage() {
 		}
 	}, [session, userId, router]);
 
-	if (session === undefined) {
-		return null; // TODO: handle this before this component is rendered
-	}
 
-	if (session && !userId) {
-		return null;
-	}
 	const getEffectiveHeaders = () => {
 		return { ...headerOverrides };
 	};
@@ -88,7 +84,7 @@ export default function McpPage() {
 		setHeaderOverrides(prev => ({ ...prev, [key]: value }));
 	};
 
-	const connectToMcp = async () => {
+	const connectToMcp = useCallback(async () => {
 		if (!server) return;
 
 		setIsConnecting(true);
@@ -104,6 +100,7 @@ export default function McpPage() {
 					url: server.url,
 					transportType: server.transportType,
 					headers: getEffectiveHeaders(),
+					id: server.id
 				}),
 			});
 
@@ -114,6 +111,10 @@ export default function McpPage() {
 				setResources(data.resources || []);
 				setIsConnected(true);
 			} else {
+				if(response.status === 401 && data.redirectUrl) {
+					window.location.href = data.redirectUrl;
+					return;
+				}
 				setConnectionError(data.message || 'Failed to connect to MCP server');
 			}
 		} catch (error) {
@@ -121,7 +122,25 @@ export default function McpPage() {
 		} finally {
 			setIsConnecting(false);
 		}
-	};
+	}, [server, getEffectiveHeaders]);
+
+	useEffect(() => {
+		if (server && !isConnected && !isConnecting && !autoConnectAttempted.current) {
+			const autoConnect = searchParams.get('auto_connect');
+			if (autoConnect === 'true') {
+				autoConnectAttempted.current = true;
+				connectToMcp();
+			}
+		}
+	}, [server, isConnected, isConnecting, searchParams, connectToMcp]);
+
+	if (session === undefined) {
+		return null; // TODO: handle this before this component is rendered
+	}
+
+	if (session && !userId) {
+		return null;
+	}
 
 	const rawHeaders = server?.headers;
 	const serverHeaders = isStringRecord(rawHeaders) ? rawHeaders : null;
@@ -298,7 +317,7 @@ export default function McpPage() {
 			<div className="flex-1 md:min-h-0 md:overflow-hidden">
 				{interactionType === 'manual' && (
 					<ManualInteraction
-						server={server ? { url: server.url, transportType: server.transportType } : null}
+						server={server ? { url: server.url, transportType: server.transportType, id: server.id } : null}
 						tools={tools}
 						isConnected={isConnected}
 						getHeaders={getEffectiveHeaders}
